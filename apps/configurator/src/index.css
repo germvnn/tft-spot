@@ -1,0 +1,196 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  --font-display:
+    "Arial Narrow", "Roboto Condensed", Impact, ui-sans-serif, system-ui,
+    sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+}
+
+:root {
+  color: #aeb8c7;
+  background: #080b11;
+  font-family: var(--font-sans);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: #080b11;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+a:focus-visible {
+  outline: 2px solid #d2ae51;
+  outline-offset: 2px;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+::selection {
+  color: #0d1017;
+  background: #d2ae51;
+}
+
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a0e15;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 2px solid #0a0e15;
+  background: #273243;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.logo-mark,
+.entity-frame {
+  clip-path: polygon(20% 0, 100% 0, 100% 80%, 80% 100%, 0 100%, 0 20%);
+}
+
+.panel-cut {
+  clip-path: polygon(
+    0 0,
+    calc(100% - 18px) 0,
+    100% 18px,
+    100% 100%,
+    18px 100%,
+    0 calc(100% - 18px)
+  );
+}
+
+.field-control {
+  border: 1px solid #2a3545;
+  color: #cbd3df;
+  background: #0a0f17;
+}
+
+.field-control:hover {
+  border-color: #3b485b;
+}
+
+.field-control:focus {
+  border-color: #867039;
+}
+
+.tier-badge,
+.meta-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0 8px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.tier-badge {
+  clip-path: polygon(7px 0, 100% 0, calc(100% - 7px) 100%, 0 100%);
+}
+
+.meta-badge {
+  border: 1px solid #303a49;
+  color: #8f9caf;
+  background: #111721;
+}
+
+.primary-button,
+.secondary-button {
+  display: inline-flex;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 15px;
+  border: 1px solid;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease;
+}
+
+.primary-button {
+  border-color: #a1843e;
+  color: #16130b;
+  background: #d2ae51;
+}
+
+.primary-button:hover:not(:disabled) {
+  border-color: #eed27c;
+  background: #e5c363;
+}
+
+.secondary-button {
+  border-color: #303b4b;
+  color: #9ca8b9;
+  background: #111721;
+}
+
+.secondary-button:hover:not(:disabled) {
+  border-color: #4a586d;
+  color: #e3e8ef;
+  background: #151d29;
+}
+
+.weight-range {
+  --track-color: #d2ae51;
+  height: 4px;
+  cursor: pointer;
+  appearance: none;
+  background: #27303d;
+}
+
+.weight-range::-webkit-slider-thumb {
+  width: 14px;
+  height: 14px;
+  appearance: none;
+  border: 2px solid #0c1119;
+  background: var(--track-color);
+  box-shadow: 0 0 0 1px var(--track-color);
+}
+
+.weight-range::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: 2px solid #0c1119;
+  border-radius: 0;
+  background: var(--track-color);
+  box-shadow: 0 0 0 1px var(--track-color);
+}

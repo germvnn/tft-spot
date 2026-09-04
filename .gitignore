@@ -10,5 +10,5 @@ wheels/
 .venv
 
 # Reproducible downloaded datasets and UI assets
-data/*
-!data/README.md
+data/assets/
+data/raw/
