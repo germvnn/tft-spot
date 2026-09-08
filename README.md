@@ -77,3 +77,10 @@ pnpm --dir apps/configurator test:e2e
 
 These tests run an isolated frontend on port 5174 with controlled API fixtures;
 they do not modify curated configurations or require the raw snapshot.
+
+## Simulator
+
+Open the **Symulator** tab to generate 50 seeded opener cases and rate individual
+composition results. Saved runs and human reviews survive refresh. Use **Przelicz
+te same spoty** after tuning the engine to compare the same inputs, or **Eksport
+JSON** to download the evaluation dataset. See [simulator details](docs/SIMULATOR.md).

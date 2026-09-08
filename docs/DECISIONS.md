@@ -67,3 +67,24 @@
   average the capped copy signals over all configured opener units. Each unit
   has equal weight; extra copies cannot substitute for missing opener units.
   Empty openers score zero. Core/support scoring is unchanged.
+
+- ADR-025 (Accepted, updates ADR-024): no-core unit signals are 0 when absent,
+  otherwise 4 + min(copies, 4), averaged across all opener units over a maximum
+  signal of 8. This gives 10/40 for one unit x4 in a four-unit opener and 28.75/40
+  with the other three units present. Core/support scoring remains unchanged.
+- ADR-026 (Accepted): the Simulator generates seeded synthetic calibration cases,
+  not combat outcomes or an estimate of real opener frequencies. Freeze spots,
+  compiled inputs, input fingerprint, versions and rankings in local JSON runs.
+  Save human reviews separately; replay exact spots against current configurations
+  into a new run with prior scores for comparison. Never auto-tune weights from
+  reviews and never modify source or curated data during simulation.
+
+
+## ADR 027 — Stage 2-1 simulator inventory limits
+
+Per user calibration assumptions, openers-v2 generates unique component types,
+with batch proportions 80% three, 10% five, 5% one and 5% two (largest remainder
+rounding with seeded ties). Unit inventory costs 7-14 gold in total and contains
+at most four copies of any cost 1-3 unit. Templates are adjusted to fit this
+budget, preferring off-direction filler. This changes generation, not scoring.
+Frozen old runs and exact replay inputs remain unchanged. See SIMULATOR.md.

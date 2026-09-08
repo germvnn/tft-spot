@@ -14,7 +14,15 @@ from tft_spot.configurator.repository import (
 )
 from tft_spot.data.augment_identity import build_augment_aliases
 from tft_spot.engine.compiler import compile_workspace
-from tft_spot.engine.scoring import rank_compositions
+from tft_spot.engine.scoring import SCORING_VERSION, rank_compositions
+from tft_spot.engine.simulator import (
+    Review,
+    SimulationRequest,
+    generate_run,
+    list_runs,
+    load_run,
+    save_review,
+)
 from tft_spot.models.configuration import CompositionConfiguration
 from tft_spot.models.spot import Spot
 
@@ -137,7 +145,7 @@ def recommendations(spot: Spot) -> dict[str, object]:
         if not compositions and not skipped:
             raise ValueError(f"No compositions available for set {spot.set_number}")
         return {
-            "scoringVersion": "stage-2-1-v2.1",
+            "scoringVersion": SCORING_VERSION,
             "recommendations": [
                 {**result, **presentation[result["sourceId"]]}
                 for result in rank_compositions(compositions, spot)
@@ -215,4 +223,55 @@ def spot_catalog() -> dict[str, object]:
             "augments": augments,
         }
     except (ConfiguratorDataError, ValueError, KeyError) as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+
+# Calibration runs and human reviews are local artifacts, separate from curated data.
+
+
+@app.get("/api/simulator/runs")
+def simulator_runs() -> dict:
+    return {"runs": list_runs(ROOT)}
+
+
+@app.post("/api/simulator/runs")
+def simulator_generate(options: SimulationRequest) -> dict:
+    try:
+        return generate_run(ROOT, options)
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+
+@app.get("/api/simulator/runs/{run_id}")
+def simulator_load(run_id: str) -> dict:
+    try:
+        return load_run(ROOT, run_id)
+    except (FileNotFoundError, ValueError) as error:
+        raise HTTPException(status_code=404, detail="Unknown simulation run") from error
+
+
+@app.put("/api/simulator/runs/{run_id}/reviews/{case_id}")
+def simulator_review(run_id: str, case_id: int, review: Review) -> dict:
+    try:
+        return save_review(ROOT, run_id, case_id, review)
+    except FileNotFoundError as error:
+        raise HTTPException(status_code=404, detail="Unknown simulation run") from error
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+
+@app.post("/api/simulator/runs/{run_id}/replay")
+def simulator_replay(run_id: str) -> dict:
+    previous = simulator_load(run_id)
+    try:
+        return generate_run(
+            ROOT,
+            SimulationRequest(
+                set_number=previous["setNumber"],
+                count=previous["count"],
+                seed=previous["seed"],
+            ),
+            previous,
+        )
+    except ValueError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error

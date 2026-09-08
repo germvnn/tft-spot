@@ -16,3 +16,6 @@ data/raw/
 # Browser test artifacts
 apps/configurator/test-results/
 apps/configurator/playwright-report/
+
+# Local calibration runs and human reviews (export explicitly to share)
+data/evaluations/

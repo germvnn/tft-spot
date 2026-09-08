@@ -15,3 +15,7 @@ first augment offer, owned units and loose components. See SCORING.md for the
 matching contract and initial calibration. The application opens on Recommendations:
 enter the spot, then generate an explained ranking below. A separate Configurator
 tab maintains curated inputs for setup and patch updates.
+
+A third Simulator tab supports empirical calibration: generate reproducible
+synthetic opener scenarios, inspect rankings, save human assessments, and replay
+identical spots after engine/configuration changes. It does not simulate combat.

@@ -36,6 +36,9 @@ Phase 1 exits when fetching is reproducible, extraction is reliable, normalized 
 - [x] Replace the 21-point unit normalization with core shares and a four-copy cap
 - [x] Cover the Veigar four-copy/three-support example (37.5/40) and multiple core units
 
+- [x] Add presence baseline for no-core openers (Veigar example: 28.75/40)
+- [x] Generate reproducible 50-case calibration runs, human reviews and replay
+
 ## Phase 3 - MVP Application
 
 - [x] Separate Recommendations and Configurator tabs; open Recommendations by default
@@ -45,6 +48,10 @@ Phase 1 exits when fetching is reproducible, extraction is reliable, normalized 
 - [x] Display ranked compositions, champion images, suggested augment and explanations
 - [x] Cover refresh, legacy configuration, counters, rarity and mobile layout in browser tests
 
+- [x] Add Simulator tab with per-case reviews, saved runs and JSON export
+
 ## Later
 
 Stage, economy, level, board strength, contested comps, scouting, positioning, transitions, automatic detection, statistics, and patch-aware models.
+
+- [x] Simulator openers-v2: unique components with calibrated batch proportions, 7-14 gold of units, maximum four copies and displayed inventory cost.
