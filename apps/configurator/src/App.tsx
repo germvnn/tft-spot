@@ -1,6 +1,7 @@
 import {
   Boxes,
   Check,
+  CheckCheck,
   ChevronRight,
   CircleAlert,
   CircleDot,
@@ -55,6 +56,8 @@ type PriorityDecision = {
   priority: Priority
 }
 
+type UnitPriorityDecision = PriorityDecision & { core: boolean }
+
 type Configuration = {
   schemaVersion: 1
   sourceId: string
@@ -65,6 +68,7 @@ type Configuration = {
     components: number
     augments: number
   }
+  units: UnitPriorityDecision[]
   components: PriorityDecision[]
   augments: PriorityDecision[]
   notes: string
@@ -139,6 +143,18 @@ async function readJson<T>(url: string, init?: RequestInit): Promise<T> {
   const payload = (await response.json()) as unknown
   if (!response.ok) throw new Error(messageFromResponse(payload))
   return payload as T
+}
+
+async function loadWorkspace(url: string, init?: RequestInit): Promise<CompositionWorkspace> {
+  const workspace = await readJson<CompositionWorkspace>(url, init)
+  return { ...workspace, configuration: withUnitDefaults(workspace.configuration, workspace.earlyUnits) }
+}
+
+function withUnitDefaults(configuration: Configuration, earlyUnits: UnitCard[]): Configuration {
+  return {
+    ...configuration,
+    units: (configuration.units ?? Array.from(new Set(earlyUnits.map((unit) => unit.apiName)), (apiName) => ({ apiName, priority: 'medium' as const, core: false }))).map((unit) => ({ ...unit, core: unit.core ?? false })),
+  }
 }
 
 function EntityImage({
@@ -271,7 +287,7 @@ function WeightControl({
   )
 }
 
-function App() {
+function App({ active = true }: { active?: boolean }) {
   const [compositions, setCompositions] = useState<CompositionSummary[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [workspace, setWorkspace] = useState<CompositionWorkspace | null>(null)
@@ -281,6 +297,7 @@ function App() {
   const [loadingList, setLoadingList] = useState(true)
   const [loadingWorkspace, setLoadingWorkspace] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [bootstrapping, setBootstrapping] = useState(false)
   const [notice, setNotice] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null)
 
   useEffect(() => {
@@ -304,7 +321,7 @@ function App() {
   useEffect(() => {
     if (!selectedId) return
     const controller = new AbortController()
-    readJson<CompositionWorkspace>(`/api/compositions/${selectedId}`, {
+    loadWorkspace(`/api/compositions/${selectedId}`, {
       signal: controller.signal,
     })
       .then((nextWorkspace) => {
@@ -325,6 +342,11 @@ function App() {
     configuration !== null &&
     baseline !== null &&
     JSON.stringify(configuration) !== JSON.stringify(baseline)
+
+  const configuredCount = useMemo(
+    () => compositions.filter((composition) => composition.configured).length,
+    [compositions],
+  )
 
   const filteredCompositions = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase('pl')
@@ -387,7 +409,18 @@ function App() {
     )
   }
 
+  const changeUnitCore = (apiName: string, core: boolean) => {
+    setConfiguration((current) => current ? {
+      ...current,
+      units: current.units.map((decision) => decision.apiName === apiName ? { ...decision, core } : decision),
+    } : current)
+  }
+
   const changeAugment = (apiName: string, priority: Priority) => {
+    if (priority === 'essential' && configuration?.augments.some((decision) => decision.apiName !== apiName && decision.priority === 'essential')) {
+      setNotice({ tone: 'error', text: 'Kompozycja moze miec tylko jeden augment Core.' })
+      return
+    }
     setConfiguration((current) =>
       current
         ? {
@@ -443,8 +476,9 @@ function App() {
           body: JSON.stringify(configuration),
         },
       )
-      setConfiguration(result.configuration)
-      setBaseline(result.configuration)
+      const saved = withUnitDefaults(result.configuration, workspace?.earlyUnits ?? [])
+      setConfiguration(saved)
+      setBaseline(saved)
       setCompositions((current) =>
         current.map((composition) =>
           composition.sourceId === selectedId
@@ -470,12 +504,63 @@ function App() {
     }
   }
 
+  const bootstrapAll = async () => {
+    if (dirty) {
+      setNotice({
+        tone: 'error',
+        text: 'Najpierw zapisz albo cofnij zmiany bieżącej kompozycji.',
+      })
+      return
+    }
+
+    const confirmed = window.confirm(
+      `Zapisać wszystkie ${compositions.length} kompozycji jako ready w data/curated?\n\nIstniejące ręczne priorytety zostaną zachowane.`,
+    )
+    if (!confirmed) return
+
+    setBootstrapping(true)
+    setNotice(null)
+    try {
+      const result = await readJson<{
+        saved: number
+        sourceIds: string[]
+      }>('/api/compositions/bootstrap-ready', { method: 'POST' })
+
+      setCompositions((current) =>
+        current.map((composition) =>
+          result.sourceIds.includes(composition.sourceId)
+            ? { ...composition, configured: true }
+            : composition,
+        ),
+      )
+
+      if (selectedId && result.sourceIds.includes(selectedId)) {
+        const nextWorkspace = await loadWorkspace(
+          `/api/compositions/${selectedId}`,
+        )
+        setWorkspace(nextWorkspace)
+        setConfiguration(nextWorkspace.configuration)
+        setBaseline(nextWorkspace.configuration)
+      }
+
+      setNotice({
+        tone: 'ok',
+        text: `Zapisano ${result.saved} kompozycji jako gotowe dla silnika.`,
+      })
+    } catch (error) {
+      setNotice({ tone: 'error', text: (error as Error).message })
+    } finally {
+      setBootstrapping(false)
+    }
+  }
+
   const saveToolRef = useRef<typeof save | null>(null)
   useEffect(() => {
     saveToolRef.current = save
   })
 
   useEffect(() => {
+    if (!active) return
     const context = document.modelContext
     if (!context?.registerTool) return
 
@@ -511,11 +596,11 @@ function App() {
     })
 
     return () => lifecycle.abort()
-  }, [])
+  }, [active])
 
   return (
     <div className="min-h-screen bg-[#080b11] text-[#aeb8c7]">
-      <header className="sticky top-0 z-30 border-b border-[#252d3a] bg-[#0a0e15]/95 backdrop-blur">
+      <header className="sticky top-16 z-30 border-b border-[#252d3a] bg-[#0a0e15]/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-[1720px] items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-3">
             <div className="logo-mark grid h-9 w-9 place-items-center border border-[#836d36] bg-[#17170f] text-[#f1cd68]">
@@ -579,11 +664,45 @@ function App() {
                 className="field-control h-9 w-full rounded-sm pl-9 pr-3 text-xs outline-none"
               />
             </label>
+
+            <div className="mt-4 border border-[#3a3828] bg-[#12140f] p-3">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-[10px] font-black uppercase tracking-[0.16em] text-[#8f7b45]">
+                  Curated bootstrap
+                </span>
+                <span className="font-mono text-[10px] text-[#b9a15d]">
+                  {configuredCount}/{compositions.length}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={bootstrapAll}
+                disabled={
+                  loadingList ||
+                  bootstrapping ||
+                  dirty ||
+                  compositions.length === 0
+                }
+                className="primary-button w-full"
+              >
+                {bootstrapping ? (
+                  <LoaderCircle className="h-4 w-4 animate-spin" />
+                ) : (
+                  <CheckCheck className="h-4 w-4" />
+                )}
+                {bootstrapping ? 'Zapisuję…' : 'Wszystkie jako ready'}
+              </button>
+              <p className="mt-2 text-[10px] leading-4 text-[#6f786b]">
+                {dirty
+                  ? 'Najpierw zapisz albo cofnij bieżące zmiany.'
+                  : 'Komponenty: Core · augmenty: medium'}
+              </p>
+            </div>
           </div>
 
           <nav
             aria-label="Kompozycje"
-            className="max-h-72 overflow-y-auto p-2 lg:max-h-[calc(100vh-10.3rem)]"
+            className="max-h-72 overflow-y-auto p-2 lg:max-h-[calc(100vh-17.5rem)]"
           >
             {loadingList ? (
               <div className="grid h-32 place-items-center text-[#758196]">
@@ -765,6 +884,7 @@ function App() {
                       title="Early units"
                       count={workspace.earlyUnits.length}
                     />
+                    <p className="mb-3 text-xs text-[#8f9bad]">Core odpowiada za 75% oceny jednostek przy jednym core, 87,5% przy dwóch i więcej przy kolejnych. Sygnał rośnie do 4 kopii.</p>
                     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                       {workspace.earlyUnits.map((unit) => (
                         <article
@@ -798,6 +918,13 @@ function App() {
                               </span>
                             )}
                           </div>
+                          <label className="mt-3 flex items-center gap-2 text-xs text-[#b7c4d6]">
+                            <input type="checkbox" className="h-4 w-4 accent-[#d2ae51]"
+                              aria-label={`Core jednostka ${unit.name}`}
+                              checked={configuration.units.find((decision) => decision.apiName === unit.apiName)?.core ?? false}
+                              onChange={(event) => changeUnitCore(unit.apiName, event.target.checked)} />
+                            Core jednostka
+                          </label>
                         </article>
                       ))}
                     </div>
@@ -810,6 +937,7 @@ function App() {
                       title="Augmenty"
                       count={workspace.augments.length}
                     />
+                    <p className="mb-3 text-xs text-[#8f9bad]">Core wymaga wyboru tego augmentu. Maksymalnie jeden na kompozycje.</p>
                     <div className="overflow-hidden border border-[#242e3c]">
                       <div className="hidden grid-cols-[minmax(0,1fr)_170px] gap-4 border-b border-[#242e3c] bg-[#111822] px-4 py-2 text-[9px] font-black uppercase tracking-[0.18em] text-[#5f6b7d] md:grid">
                         <span>Augment</span>

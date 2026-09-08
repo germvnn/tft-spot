@@ -12,3 +12,7 @@ wheels/
 # Reproducible downloaded datasets and UI assets
 data/assets/
 data/raw/
+
+# Browser test artifacts
+apps/configurator/test-results/
+apps/configurator/playwright-report/
