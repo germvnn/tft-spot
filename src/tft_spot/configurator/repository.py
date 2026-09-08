@@ -12,6 +12,7 @@ from tft_spot.models.configuration import (
     CompositionConfiguration,
     PriorityDecision,
     ScoringWeights,
+    UnitPriorityDecision,
 )
 
 
@@ -130,6 +131,7 @@ class ConfigurationRepository:
         configuration = self._load_or_default_configuration(
             source_id=source_id,
             set_number=set_number,
+            unit_api_names=list(dict.fromkeys(unit["apiName"] for unit in early_units)),
             component_api_names=list(component_counts),
             augment_api_names=[augment["apiName"] for augment in augment_cards],
         )
@@ -190,6 +192,23 @@ class ConfigurationRepository:
             "augment",
         )
 
+        self._validate_decisions(
+            configuration.units,
+            {unit["apiName"] for unit in workspace["earlyUnits"]},
+            "unit",
+        )
+        for field, cards in (
+            ("units", "earlyUnits"),
+            ("components", "components"),
+            ("augments", "augments"),
+        ):
+            if configuration.status == "ready" and {
+                d.api_name for d in getattr(configuration, field)
+            } != {c["apiName"] for c in workspace[cards]}:
+                raise ConfiguratorDataError(
+                    f"Ready configuration requires all {field} decisions"
+                )
+
         saved = configuration.model_copy(update={"updated_at": datetime.now(UTC)})
         target = self._configuration_path(saved.set_number, source_id)
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -205,6 +224,68 @@ class ConfigurationRepository:
         )
         temporary.replace(target)
         return saved
+
+    def bootstrap_ready_configurations(self) -> list[CompositionConfiguration]:
+        prepared: list[tuple[str, CompositionConfiguration]] = []
+        for composition in self.list_compositions():
+            source_id = str(composition["sourceId"])
+            workspace = self.get_workspace(source_id)
+            current = CompositionConfiguration.model_validate(
+                workspace["configuration"]
+            )
+            prepared.append(
+                (
+                    source_id,
+                    CompositionConfiguration(
+                        schema_version=current.schema_version,
+                        source_id=current.source_id,
+                        set_number=current.set_number,
+                        status="ready",
+                        weights=current.weights,
+                        units=[
+                            d.model_copy(
+                                update={
+                                    "priority": "medium"
+                                    if d.priority == "unset"
+                                    else d.priority
+                                }
+                            )
+                            for d in current.units
+                        ],
+                        components=[
+                            decision.model_copy(
+                                update={
+                                    "priority": (
+                                        "essential"
+                                        if decision.priority == "unset"
+                                        else decision.priority
+                                    )
+                                }
+                            )
+                            for decision in current.components
+                        ],
+                        augments=[
+                            decision.model_copy(
+                                update={
+                                    "priority": (
+                                        "medium"
+                                        if decision.priority == "unset"
+                                        else decision.priority
+                                    )
+                                }
+                            )
+                            for decision in current.augments
+                        ],
+                        notes=current.notes,
+                        updated_at=current.updated_at,
+                    ),
+                )
+            )
+
+        return [
+            self.save_configuration(source_id, configuration)
+            for source_id, configuration in prepared
+        ]
 
     def _unit_cards(
         self,
@@ -259,6 +340,7 @@ class ConfigurationRepository:
         *,
         source_id: str,
         set_number: int,
+        unit_api_names: list[str],
         component_api_names: list[str],
         augment_api_names: list[str],
     ) -> CompositionConfiguration:
@@ -269,6 +351,21 @@ class ConfigurationRepository:
             else None
         )
 
+        if existing:
+            if existing.source_id != source_id or existing.set_number != set_number:
+                raise ConfiguratorDataError(
+                    "Stored configuration identity does not match raw guide"
+                )
+            for decisions, names, label in (
+                (existing.units, unit_api_names, "unit"),
+                (existing.components, component_api_names, "component"),
+                (existing.augments, augment_api_names, "augment"),
+            ):
+                self._validate_decisions(decisions, set(names), label)
+        unit_priorities = (
+            {d.api_name: d.priority for d in existing.units} if existing else {}
+        )
+        unit_core = {d.api_name: d.core for d in existing.units} if existing else {}
         component_priorities = (
             {decision.api_name: decision.priority for decision in existing.components}
             if existing
@@ -285,10 +382,18 @@ class ConfigurationRepository:
             set_number=set_number,
             status=existing.status if existing else "draft",
             weights=existing.weights if existing else ScoringWeights(),
+            units=[
+                UnitPriorityDecision(
+                    api_name=name,
+                    priority=unit_priorities.get(name, "medium"),
+                    core=unit_core.get(name, False),
+                )
+                for name in unit_api_names
+            ],
             components=[
                 PriorityDecision(
                     api_name=api_name,
-                    priority=component_priorities.get(api_name, "high"),
+                    priority=component_priorities.get(api_name, "essential"),
                 )
                 for api_name in component_api_names
             ],

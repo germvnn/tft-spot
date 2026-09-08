@@ -40,12 +40,19 @@ class PriorityDecision(ApiModel):
     priority: Priority = "unset"
 
 
+class UnitPriorityDecision(PriorityDecision):
+    # Legacy field accepted for saved configurations; unit scoring uses core only.
+    priority: Priority = "medium"
+    core: bool = False
+
+
 class CompositionConfiguration(ApiModel):
     schema_version: Literal[1] = 1
     source_id: str = Field(min_length=1)
     set_number: int = Field(ge=1)
     status: ConfigurationStatus = "draft"
     weights: ScoringWeights = Field(default_factory=ScoringWeights)
+    units: list[UnitPriorityDecision] = Field(default_factory=list)
     components: list[PriorityDecision]
     augments: list[PriorityDecision]
     notes: str = ""
@@ -53,6 +60,12 @@ class CompositionConfiguration(ApiModel):
 
     @model_validator(mode="after")
     def require_complete_ready_configuration(self) -> CompositionConfiguration:
+        for decisions in (self.units, self.components, self.augments):
+            names = [decision.api_name for decision in decisions]
+            if len(names) != len(set(names)):
+                raise ValueError("Duplicate priority decisions are not allowed")
+        if sum(d.priority == "essential" for d in self.augments) > 1:
+            raise ValueError("At most one essential augment is allowed")
         if self.status != "ready":
             return self
         if any(
