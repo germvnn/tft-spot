@@ -206,7 +206,9 @@ test("F5 and legacy configuration do not crash; tabs retain input and edits", as
   await page.goto("/");
   await page.getByRole("button", { name: /^Akali:/ }).click();
   await page.getByRole("link", { name: "Konfigurator", exact: true }).click();
-  await expect(page.getByRole("checkbox", { name: "Core jednostka Akali" })).not.toBeChecked();
+  await expect(
+    page.getByRole("checkbox", { name: "Core jednostka Akali" }),
+  ).not.toBeChecked();
   await expect(page.getByLabel("Priorytet jednostki Akali")).toHaveCount(0);
   await page.getByRole("checkbox", { name: "Core jednostka Akali" }).check();
   await page.getByRole("link", { name: "Rekomendacje", exact: true }).click();
@@ -214,9 +216,13 @@ test("F5 and legacy configuration do not crash; tabs retain input and edits", as
     page.getByRole("button", { name: /^Akali:/ }),
   ).toHaveAccessibleName("Akali: 1 kopii. Dodaj 1");
   await page.getByRole("link", { name: "Konfigurator", exact: true }).click();
-  await expect(page.getByRole("checkbox", { name: "Core jednostka Akali" })).toBeChecked();
+  await expect(
+    page.getByRole("checkbox", { name: "Core jednostka Akali" }),
+  ).toBeChecked();
   await page.reload();
-  await expect(page.getByRole("checkbox", { name: "Core jednostka Akali" })).not.toBeChecked();
+  await expect(
+    page.getByRole("checkbox", { name: "Core jednostka Akali" }),
+  ).not.toBeChecked();
   await page.getByRole("link", { name: "Rekomendacje", exact: true }).click();
   await page.reload();
   await expect(
@@ -248,11 +254,14 @@ test("mobile input fits viewport and server failure has a recovery action", asyn
   ).toBe(true);
 });
 
-
-test("core unit defaults to false and survives saving and refresh", async ({ page }) => {
+test("core unit defaults to false and survives saving and refresh", async ({
+  page,
+}) => {
   await mockData(page);
   let savedWorkspace = structuredClone(workspace);
-  await page.route("**/api/compositions/comp", (route) => route.fulfill({ json: savedWorkspace }));
+  await page.route("**/api/compositions/comp", (route) =>
+    route.fulfill({ json: savedWorkspace }),
+  );
   await page.route("**/api/compositions/comp/configuration", async (route) => {
     const configuration = route.request().postDataJSON();
     savedWorkspace = { ...savedWorkspace, configuration };
@@ -263,9 +272,105 @@ test("core unit defaults to false and survives saving and refresh", async ({ pag
   await expect(checkbox).not.toBeChecked();
   await checkbox.check();
   const request = page.waitForRequest("**/api/compositions/comp/configuration");
-  await page.getByRole("button", { name: "Zapisz konfigurację", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Zapisz konfigurację", exact: true })
+    .click();
   expect((await request).postDataJSON().units[0].core).toBe(true);
   await expect(page.getByRole("status")).toContainText("Zapisano konfigurację");
   await page.reload();
   await expect(checkbox).toBeChecked();
+});
+
+test("simulator generates fifty cases and persists a human review across refresh", async ({
+  page,
+}) => {
+  await mockData(page);
+  await page.route("**/api/compositions/comp", route => route.fulfill({ json: {
+    ...workspace,
+    finalUnits: [{ ...workspace.finalUnits[0], items: [bow, bow] }],
+  } }));
+  await page.route("**/api/compositions/other", route => route.fulfill({ json: {
+    ...workspace,
+    finalUnits: [{ ...workspace.finalUnits[0], name: "Other carry", items: [] }],
+  } }));
+  let generated = false;
+  const run = {
+    id: "00000000-0000-4000-8000-000000000001",
+    seed: 42,
+    count: 50,
+    setNumber: 18,
+    createdAt: "2026-09-08T12:00:00Z",
+    scoringVersion: "stage-2-1-v2.2",
+    entities: { akali, bow, "gold-a": augments[0] },
+    cases: Array.from({ length: 50 }, (_, index) => ({
+      id: index + 1,
+      label: "Pełny opener",
+      targetSourceId: "comp",
+      targetTitle: "Akali Direction",
+      spot: {
+        units: [{ apiName: "akali", count: 4 }],
+        components: [{ apiName: "bow", count: 3 }],
+        offeredAugments: ["gold-a"],
+      },
+      rankings: [...response.recommendations, { ...response.recommendations[0], sourceId: "other", title: "Other direction" }].map((r) => ({
+        ...r,
+        evidence: { ...r.evidence, unitFit: { coreCount: 0, coreShare: 0 } },
+      })),
+      review: null as Record<string, unknown> | null,
+      referenceReview: null,
+      previousScores: null,
+    })),
+  };
+  await page.route("**/api/simulator/runs", async (route) => {
+    if (route.request().method() === "POST") {
+      expect(route.request().postDataJSON()).toEqual({
+        seed: 42,
+        count: 50,
+        setNumber: 18,
+      });
+      generated = true;
+      await route.fulfill({ json: run });
+    } else await route.fulfill({ json: { runs: generated ? [run] : [] } });
+  });
+  await page.route(`**/api/simulator/runs/${run.id}`, (route) =>
+    route.fulfill({ json: run }),
+  );
+  await page.route(
+    `**/api/simulator/runs/${run.id}/reviews/1`,
+    async (route) => {
+      run.cases[0].review = route.request().postDataJSON();
+      await route.fulfill({ json: run.cases[0].review });
+    },
+  );
+  await page.goto("/#simulator");
+  await page.getByRole("button", { name: "Generuj serię" }).click();
+  await expect(
+    page.getByLabel("Przypadki symulacji").getByRole("button"),
+  ).toHaveCount(50);
+  const board = page.getByRole("region", { name: "Final composition" });
+  await expect(board.getByText("Akali", { exact: true })).toBeVisible();
+  await expect(board.getByTitle("Recurve Bow", { exact: true })).toHaveCount(2);
+  await page.getByLabel("Oceniana kompozycja").selectOption("other");
+  await expect(board.getByText("Other carry")).toBeVisible();
+  await expect(board.getByText("Akali", { exact: true })).toHaveCount(0);
+  await page.getByLabel("Oceniana kompozycja").selectOption("comp");
+  await expect(board.getByText("Akali", { exact: true })).toBeVisible();
+  await page.getByLabel("Ocena wyniku").selectOption("too_low");
+  await page.getByLabel("Oczekiwane punkty jednostek").fill("35");
+  await page.getByLabel("Komentarz do spotu").fill("Dobry opener");
+  await page.getByRole("button", { name: "Zapisz i następny" }).click();
+  await expect(
+    page.getByRole("heading", { name: "#2 · Pełny opener" }),
+  ).toBeVisible();
+  expect(run.cases[0].review?.expectedUnitFit).toBe(87.5);
+  await page.reload();
+  await expect(page.getByLabel("Komentarz do spotu")).toHaveValue(
+    "Dobry opener",
+  );
+  await expect(page.getByLabel("Oczekiwane punkty jednostek")).toHaveValue(
+    "35",
+  );
+  await expect(
+    page.getByText("1/50 ocenionych", { exact: true }),
+  ).toBeVisible();
 });
