@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "sourceId": "o9jvqx283oovfzr",
+  "setNumber": 18,
+  "status": "ready",
+  "weights": {
+    "units": 40,
+    "components": 30,
+    "augments": 30
+  },
+  "components": [
+    {
+      "apiName": "DA_Component_RecurveBow",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_NeedlesslyLargeRod",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_SparringGloves",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_GiantsBelt",
+      "priority": "high"
+    }
+  ],
+  "augments": [
+    {
+      "apiName": "DA_WandOverflow",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_SpeedyDoubleKill",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_Staffsmith",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_18_BigGrabBag",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_18_PrimalAugmentPlus_Nidalee",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_CaretakersFavor",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_BuriedTreasuresIII",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_TimeSkip",
+      "priority": "medium"
+    }
+  ],
+  "notes": "",
+  "updatedAt": "2026-09-08T05:53:20.606504Z"
+}

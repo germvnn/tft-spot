@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "sourceId": "3s628k9w9qsh8mw",
+  "setNumber": 18,
+  "status": "ready",
+  "weights": {
+    "units": 40,
+    "components": 30,
+    "augments": 30
+  },
+  "components": [
+    {
+      "apiName": "DA_Component_TearOfTheGoddess",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_BFSword",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_ChainVest",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_NegatronCloak",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_SparringGloves",
+      "priority": "high"
+    }
+  ],
+  "augments": [
+    {
+      "apiName": "DA_WorththeWaitII",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_18_CaretakersAlly",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_KickStart",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_Swordsmith",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_GlassCannon_Silver",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_SwordOverflow",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_HeroicGrabBag",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_SoloPlate",
+      "priority": "medium"
+    }
+  ],
+  "notes": "",
+  "updatedAt": "2026-09-08T05:53:20.619285Z"
+}

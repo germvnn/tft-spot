@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "sourceId": "ggxzd3j3w9knl0e",
+  "setNumber": 18,
+  "status": "ready",
+  "weights": {
+    "units": 40,
+    "components": 30,
+    "augments": 30
+  },
+  "components": [
+    {
+      "apiName": "DA_Component_BFSword",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_SparringGloves",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_GiantsBelt",
+      "priority": "high"
+    }
+  ],
+  "augments": [
+    {
+      "apiName": "DA_18_BigGrabBag",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_18_PrimalAugmentPlus_Nidalee",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_CaretakersFavor",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_Swordsmith",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_18_PrimalAugmentPlus_Sivir",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_CarveAPath",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_18_FOURcing",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_DeadlierBlades",
+      "priority": "medium"
+    }
+  ],
+  "notes": "",
+  "updatedAt": "2026-09-08T05:53:20.573864Z"
+}

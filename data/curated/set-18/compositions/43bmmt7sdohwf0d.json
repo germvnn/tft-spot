@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "sourceId": "43bmmt7sdohwf0d",
+  "setNumber": 18,
+  "status": "ready",
+  "weights": {
+    "units": 40,
+    "components": 30,
+    "augments": 30
+  },
+  "components": [
+    {
+      "apiName": "DA_Component_RecurveBow",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_NeedlesslyLargeRod",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_BFSword",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_ChainVest",
+      "priority": "high"
+    }
+  ],
+  "augments": [
+    {
+      "apiName": "DA_ChampDelivery",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_SpeedyDoubleKill",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_HeroicGrabBagPlus",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_TradeSector",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_BoosterPack",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_ExclusiveCustomization",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_LatentForge",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_LegionOfThrees",
+      "priority": "medium"
+    }
+  ],
+  "notes": "",
+  "updatedAt": "2026-09-08T05:53:20.609686Z"
+}

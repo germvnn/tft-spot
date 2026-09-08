@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "sourceId": "jmidj8nhh80594c",
+  "setNumber": 18,
+  "status": "ready",
+  "weights": {
+    "units": 40,
+    "components": 30,
+    "augments": 30
+  },
+  "components": [
+    {
+      "apiName": "DA_Component_RecurveBow",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_NeedlesslyLargeRod",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_SparringGloves",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_GiantsBelt",
+      "priority": "high"
+    }
+  ],
+  "augments": [
+    {
+      "apiName": "DA_TraitLadder",
+      "priority": "essential"
+    },
+    {
+      "apiName": "DA_Coronation",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_CursedCrown",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_MagicRoll",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_UrfsGrabBag",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_URF",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_SpreadingRootsPlus",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_18_BranchingOutPlus",
+      "priority": "medium"
+    }
+  ],
+  "notes": "",
+  "updatedAt": "2026-09-08T05:54:17.969823Z"
+}

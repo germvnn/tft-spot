@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "sourceId": "h67mfu31g8x3mw1",
+  "setNumber": 18,
+  "status": "ready",
+  "weights": {
+    "units": 40,
+    "components": 30,
+    "augments": 30
+  },
+  "components": [
+    {
+      "apiName": "DA_Component_TearOfTheGoddess",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_SparringGloves",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_NeedlesslyLargeRod",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_ChainVest",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_NegatronCloak",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_GiantsBelt",
+      "priority": "high"
+    }
+  ],
+  "augments": [
+    {
+      "apiName": "DA_LivingForge",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_ForgedInStrength",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_PortableForge",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_LatentForge",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_18_FloraFatalisAugment",
+      "priority": "essential"
+    },
+    {
+      "apiName": "DA_MissedConnections",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_PandorasBench",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_DeadlierCaps",
+      "priority": "medium"
+    }
+  ],
+  "notes": "",
+  "updatedAt": "2026-09-08T05:55:03.984773Z"
+}

@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "sourceId": "8a3hlpgr3vzi344",
+  "setNumber": 18,
+  "status": "ready",
+  "weights": {
+    "units": 40,
+    "components": 30,
+    "augments": 30
+  },
+  "components": [
+    {
+      "apiName": "DA_Component_GiantsBelt",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_NeedlesslyLargeRod",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_RecurveBow",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_TearOfTheGoddess",
+      "priority": "high"
+    }
+  ],
+  "augments": [
+    {
+      "apiName": "DA_18_CovenTraitAugment_LootToAP",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_18_CovenTraitAugment",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_WandOverflow",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_SeraphimsStaff",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_Staffsmith",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_DeadlierCaps",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_BoosterPack",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_18_OnesTwosThree",
+      "priority": "medium"
+    }
+  ],
+  "notes": "",
+  "updatedAt": "2026-09-08T05:53:20.596404Z"
+}

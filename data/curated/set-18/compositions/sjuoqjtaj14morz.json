@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "sourceId": "sjuoqjtaj14morz",
+  "setNumber": 18,
+  "status": "ready",
+  "weights": {
+    "units": 40,
+    "components": 30,
+    "augments": 30
+  },
+  "components": [
+    {
+      "apiName": "DA_Component_RecurveBow",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_NeedlesslyLargeRod",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_ChainVest",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_BFSword",
+      "priority": "high"
+    }
+  ],
+  "augments": [
+    {
+      "apiName": "DA_LatentForge",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_PortableForge",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_ForgedInStrength",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_LivingForge",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_NestingAnvils",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_HeroicGrabBag",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_LegionOfThrees",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_18_BigGrabBag",
+      "priority": "medium"
+    }
+  ],
+  "notes": "",
+  "updatedAt": "2026-09-08T05:53:20.583321Z"
+}

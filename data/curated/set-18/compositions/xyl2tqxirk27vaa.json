@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "sourceId": "xyl2tqxirk27vaa",
+  "setNumber": 18,
+  "status": "ready",
+  "weights": {
+    "units": 40,
+    "components": 30,
+    "augments": 30
+  },
+  "components": [
+    {
+      "apiName": "DA_Component_TearOfTheGoddess",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_BFSword",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_NeedlesslyLargeRod",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_ChainVest",
+      "priority": "high"
+    }
+  ],
+  "augments": [
+    {
+      "apiName": "DA_Ascension",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_18_FloraFatalisAugment",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_SpiritOfRedemption",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_ItsMeBaby",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_WovenMagic",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_HeroicGrabBagPlusPlus",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_FlowingTears",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_CookingPot",
+      "priority": "medium"
+    }
+  ],
+  "notes": "",
+  "updatedAt": "2026-09-08T05:53:20.580259Z"
+}

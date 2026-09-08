@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "sourceId": "d5xejfzkia4w1c2",
+  "setNumber": 18,
+  "status": "ready",
+  "weights": {
+    "units": 40,
+    "components": 30,
+    "augments": 30
+  },
+  "components": [
+    {
+      "apiName": "DA_Component_RecurveBow",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_NeedlesslyLargeRod",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_NegatronCloak",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_GiantsBelt",
+      "priority": "high"
+    }
+  ],
+  "augments": [
+    {
+      "apiName": "DA_SpeedyDoubleKill",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_BackupBows",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_KickStart",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_PrismaticTicket",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_Replication",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_ShimmerscaleEssence",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_TradeSector",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_HeroicGrabBag",
+      "priority": "medium"
+    }
+  ],
+  "notes": "",
+  "updatedAt": "2026-09-08T05:53:20.602817Z"
+}

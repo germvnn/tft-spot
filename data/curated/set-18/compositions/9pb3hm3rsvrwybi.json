@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "sourceId": "9pb3hm3rsvrwybi",
+  "setNumber": 18,
+  "status": "ready",
+  "weights": {
+    "units": 40,
+    "components": 30,
+    "augments": 30
+  },
+  "components": [
+    {
+      "apiName": "DA_Component_RecurveBow",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_NeedlesslyLargeRod",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_ChainVest",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_NegatronCloak",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_SparringGloves",
+      "priority": "high"
+    }
+  ],
+  "augments": [
+    {
+      "apiName": "DA_18_SolarTraitAugment",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_PandorasBench",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_PrismaticTicket",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_NoScoutNoPivot",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_HeroicGrabBagPlus",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_MissedConnections",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_PortableForge",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_18_ElderwoodTraitAugment",
+      "priority": "medium"
+    }
+  ],
+  "notes": "",
+  "updatedAt": "2026-09-08T05:53:20.570499Z"
+}

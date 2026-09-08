@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "sourceId": "32tqzqboq6ap171",
+  "setNumber": 18,
+  "status": "ready",
+  "weights": {
+    "units": 40,
+    "components": 30,
+    "augments": 30
+  },
+  "components": [
+    {
+      "apiName": "DA_Component_TearOfTheGoddess",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_BFSword",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_NeedlesslyLargeRod",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_ChainVest",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_NegatronCloak",
+      "priority": "high"
+    }
+  ],
+  "augments": [
+    {
+      "apiName": "DA_WorththeWaitII",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_18_CaretakersAlly",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_DeadlierCaps",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_18_SprykinAugment",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_SoloPlate",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_TradeSector",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_URF",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_UrfsGrabBag",
+      "priority": "medium"
+    }
+  ],
+  "notes": "",
+  "updatedAt": "2026-09-08T05:53:20.622489Z"
+}

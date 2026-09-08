@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "sourceId": "hl39j8m4hzxr7ly",
+  "setNumber": 18,
+  "status": "ready",
+  "weights": {
+    "units": 40,
+    "components": 30,
+    "augments": 30
+  },
+  "components": [
+    {
+      "apiName": "DA_Component_RecurveBow",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_NeedlesslyLargeRod",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_BFSword",
+      "priority": "high"
+    }
+  ],
+  "augments": [
+    {
+      "apiName": "DA_URF",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_UrfsGrabBag",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_18_BranchingOut",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_18_BranchingOutPlus",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_SpreadingRoots",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_SpreadingRootsPlus",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_HeroicGrabBagPlusPlus",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_Swordsmith",
+      "priority": "medium"
+    }
+  ],
+  "notes": "",
+  "updatedAt": "2026-09-08T05:53:20.635743Z"
+}

@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "sourceId": "k4p57bifqqj3aup",
+  "setNumber": 18,
+  "status": "ready",
+  "weights": {
+    "units": 40,
+    "components": 30,
+    "augments": 30
+  },
+  "components": [
+    {
+      "apiName": "DA_Component_TearOfTheGoddess",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_BFSword",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_RecurveBow",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_ChainVest",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_GiantsBelt",
+      "priority": "high"
+    }
+  ],
+  "augments": [
+    {
+      "apiName": "DA_18_CaretakersAlly",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_WorththeWaitII",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_LatentForge",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_PortableForge",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_ForgedInStrength",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_LivingForge",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_HeroicGrabBagPlus",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_NestingAnvils",
+      "priority": "medium"
+    }
+  ],
+  "notes": "",
+  "updatedAt": "2026-09-08T05:53:20.612988Z"
+}

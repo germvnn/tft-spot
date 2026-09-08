@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "sourceId": "wz0a5dwezzb5rbh",
+  "setNumber": 18,
+  "status": "ready",
+  "weights": {
+    "units": 40,
+    "components": 30,
+    "augments": 30
+  },
+  "components": [
+    {
+      "apiName": "DA_Component_RecurveBow",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_SparringGloves",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_BFSword",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_TearOfTheGoddess",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_GiantsBelt",
+      "priority": "high"
+    }
+  ],
+  "augments": [
+    {
+      "apiName": "DA_18_RiftbeastTraitAugment",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_18_RiftbeastTraitAugmentStampede",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_JeweledLotus_I",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_GlassCannon_Silver",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_WorththeWaitII",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_18_CaretakersAlly",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_LuckyGlovesPlus",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_NestingDolls",
+      "priority": "medium"
+    }
+  ],
+  "notes": "",
+  "updatedAt": "2026-09-08T05:53:20.593281Z"
+}

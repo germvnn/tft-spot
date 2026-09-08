@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "sourceId": "x8groouvc6mv02r",
+  "setNumber": 18,
+  "status": "ready",
+  "weights": {
+    "units": 40,
+    "components": 30,
+    "augments": 30
+  },
+  "components": [
+    {
+      "apiName": "DA_Component_RecurveBow",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_NeedlesslyLargeRod",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_ChainVest",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_NegatronCloak",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_SparringGloves",
+      "priority": "high"
+    }
+  ],
+  "augments": [
+    {
+      "apiName": "DA_CursedCrown",
+      "priority": "essential"
+    },
+    {
+      "apiName": "DA_WorththeWait",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_WorththeWaitII",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_SpeedyDoubleKill",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_PrismaticTicket",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_MissedConnections",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_CommerceCore",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_PandorasBench",
+      "priority": "medium"
+    }
+  ],
+  "notes": "",
+  "updatedAt": "2026-09-08T05:54:04.179544Z"
+}

@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "sourceId": "aqgxioqdlyuamd3",
+  "setNumber": 18,
+  "status": "ready",
+  "weights": {
+    "units": 40,
+    "components": 30,
+    "augments": 30
+  },
+  "components": [
+    {
+      "apiName": "DA_Component_BFSword",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_ChainVest",
+      "priority": "high"
+    },
+    {
+      "apiName": "DA_Component_NeedlesslyLargeRod",
+      "priority": "high"
+    }
+  ],
+  "augments": [
+    {
+      "apiName": "DA_18_RivalsAugment",
+      "priority": "essential"
+    },
+    {
+      "apiName": "DA_HeroicGrabBagPlus",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_HeroicGrabBagPlusPlus",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_Swordsmith",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_18_BigGrabBag",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_GoldenGamblePlus",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_SmallGrabBag",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_SalvageBinPlus",
+      "priority": "medium"
+    }
+  ],
+  "notes": "",
+  "updatedAt": "2026-09-08T05:54:39.647817Z"
+}
