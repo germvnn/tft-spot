@@ -38,3 +38,34 @@ Validate all composition, champion-trait, trait-contribution, and item-component
 7. Preserve description markup.
 8. Treat null, empty string, and missing fields distinctly.
 9. Do not infer business meaning from carousel or augmentTypes ordering.
+
+## Stage 2-1 engine adapter
+
+The engine compiler currently uses the configurator's resolved per-composition
+workspace. It carries guide sourceId, set, explicit curated priorities, distinct
+early-unit apiNames and component requiredCount into validated engine models.
+Raw earlyComp star levels remain reference-only. Component capacity is an explicit
+MVP interpretation of the existing recipe tally; source carousel ordering never
+sets priorities. See SCORING.md for the full scoring and compatibility contract.
+
+## Player catalog presentation
+
+GET /api/spot-catalog exposes sourceId, apiName, setNumber and local image URLs.
+Champion cost comes directly from raw cost. All champions remain in this response;
+the player picker shows only costs 1, 2 and 3. Augment tier is numeric in the local
+snapshot: 1 = silver, 2 = gold, 3 = prismatic. Source stages and disabled metadata
+are preserved. Components are entries whose raw type equals components.
+Recommendation responses add mainChampion, finalUnits, tier and style for display;
+these fields do not alter matching scores.
+
+## Augment equivalence for matching
+
+The local snapshot contains 260 source augment records but 251 distinct
+(set, tier, name) groups. Gold Consuming Flora has three apiNames for stages
+2-1, 3-2 and 4-2. Unrivaled, Sun and Moon, Beast Within and Nesting Dolls also
+have same-name/tier variants. The player selector presents one group entry,
+retaining aliasApiNames and each variant's sourceId, stages, description and
+disabled metadata. Grouping is exact by name and tier within a set, not fuzzy.
+The first source occurrence is the representative apiName. All source records
+and curated apiName references remain unchanged on disk. The compiler and API
+resolve those references and offered aliases to the same representative.

@@ -19,16 +19,31 @@
 - [ ] Convert champion trait IDs to Trait.apiName
 - [ ] Validate champion, item, augment, and trait references
 - [ ] Produce normalized Set 18 snapshot
+- [x] Bootstrap all curated composition configurations with explicit defaults
 
 Phase 1 exits when fetching is reproducible, extraction is reliable, normalized datasets are generated, integrity passes, and no scoring interpretation is required.
 
 ## Phase 2 - MVP Scoring Engine
 
-Define models and semantics, then implement explainable component, augment, unit, and combined fit and ranking.
+- [x] Define stage 2-1 spot and compiled composition contracts
+- [x] Add curated early-unit priorities and single-essential-augment validation
+- [x] Implement explained component, augment, Fibonacci unit and combined matching
+- [x] Rank composition/augment scenarios with explicit eligibility
+- [x] Expose POST /api/recommendations
+- [x] Group same-name/tier augment choices and resolve all apiName aliases in matching
+- [x] Store optional per-unit core flags, default false, without blocking batch saves
+- [ ] Calibrate matching scores against representative player-reviewed spots
+- [x] Replace the 21-point unit normalization with core shares and a four-copy cap
+- [x] Cover the Veigar four-copy/three-support example (37.5/40) and multiple core units
 
 ## Phase 3 - MVP Application
 
-Expose data and recommendations through a backend and build the game-state configurator and explainable ranking UI.
+- [x] Separate Recommendations and Configurator tabs; open Recommendations by default
+- [x] Add stage 2-1 inventory entry with left/right click quantity controls
+- [x] Show cost 1-3 units with gray/green/blue borders
+- [x] Select up to three offered augments through silver/gold/prismatic filtering
+- [x] Display ranked compositions, champion images, suggested augment and explanations
+- [x] Cover refresh, legacy configuration, counters, rarity and mobile layout in browser tests
 
 ## Later
 
