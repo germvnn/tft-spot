@@ -16,6 +16,7 @@ PRIORITY_VALUES = {
 COPY_SIGNAL = (0, 1, 3, 5, 8)
 SUPPORT_SIGNAL_TARGET = 4.0
 SIGNAL_PER_UNIT = 8.0
+SCORING_VERSION = "stage-2-1-v2.2"
 
 
 def score_composition(comp: EngineComposition, spot: Spot) -> dict[str, Any]:
@@ -28,9 +29,14 @@ def score_composition(comp: EngineComposition, spot: Spot) -> dict[str, Any]:
     for component in spot.components:
         owned[component.api_name] += component.count
     units: list[dict[str, Any]] = []
+    has_core = any(decision.core for decision in comp.units)
     for decision in comp.units:
         count = copies[decision.api_name]
-        signal = COPY_SIGNAL[min(count, 4)]
+        signal = (
+            COPY_SIGNAL[min(count, 4)]
+            if has_core
+            else (4 + min(count, 4) if count else 0)
+        )
         units.append(
             {
                 "apiName": decision.api_name,

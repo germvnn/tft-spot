@@ -31,7 +31,7 @@ def spot(**changes):
 
 
 @pytest.mark.parametrize(
-    "copies,points", list(enumerate([0, 1, 3, 5, 8, 8, 8, 8, 8, 8]))
+    "copies,points", list(enumerate([0, 5, 6, 7, 8, 8, 8, 8, 8, 8]))
 )
 def test_copy_curve(copies, points):
     result = score_composition(
@@ -302,7 +302,7 @@ def test_no_core_each_opener_unit_has_equal_share_and_caps_independently():
             ]
         ),
     )
-    assert supported["variants"][0]["weightedContributions"]["units"] == 13.75
+    assert supported["variants"][0]["weightedContributions"]["units"] == 28.75
     complete = score_composition(
         comp,
         spot(

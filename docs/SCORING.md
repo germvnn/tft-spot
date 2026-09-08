@@ -1,4 +1,4 @@
-# Stage 2-1 matching, version 2.1
+# Stage 2-1 matching, version 2.2
 
 The engine recommends a direction at the first augment choice. Its 0-100 score
 measures resource matching, not win probability or final-board completion.
@@ -43,11 +43,14 @@ pair plus a single). Missing support is not redistributed to core, even if no
 support units are configured. Four copies of the only core alone give 75 unit fit;
 with three support singles they give 93.75 fit, or 37.5 of a 40-point unit weight.
 
-Without any configured core, each configured opener unit has equal weight:
-`unitFit = 100 * sum(signals) / (8 * numberOfOpenerUnits)`.
+Without any configured core, each configured opener unit has equal weight.
+Its presence signal is zero when absent, otherwise `4 + min(copies, 4)`:
+0/5/6/7/8 for 0/1/2/3/4+ copies. The base rewards a playable opener while copies
+provide an additional linear bonus.
+`unitFit = 100 * sum(presenceSignals) / (8 * numberOfOpenerUnits)`.
 Each unit caps independently at four copies; copies of one cannot substitute for
 other opener units. With four opener units, Veigar x4 alone gives 25 unit fit
-(10/40), and adding three support singles gives 34.375 fit (13.75/40).
+(10/40), and adding three support singles gives 71.875 fit (28.75/40).
 An empty opener or empty inventory yields zero. This averaging applies only
 when no core is configured; the core/support formula above remains unchanged.
 Raw earlyComp stars remain reference information.
