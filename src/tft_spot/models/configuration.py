@@ -46,6 +46,50 @@ class UnitPriorityDecision(PriorityDecision):
     core: bool = False
 
 
+class OpenerVariant(ApiModel):
+    name: str = Field(min_length=1, max_length=100)
+    units: list[UnitPriorityDecision] = Field(min_length=1, max_length=12)
+
+    @model_validator(mode="after")
+    def unique_units(self):
+        if len({u.api_name for u in self.units}) != len(self.units):
+            raise ValueError("Duplicate opener units")
+        return self
+
+
+class ItemOverride(ApiModel):
+    champion_api_name: str
+    item_api_name: str
+    fit: float = Field(ge=0, le=1)
+    reason: str = Field(min_length=1, max_length=500)
+
+
+class AugmentCondition(ApiModel):
+    augment_api_name: str
+    champion_api_name: str
+    min_copies: int = Field(default=2, ge=1, le=4)
+    item_api_name: str | None = None
+    bonus: float = Field(default=10, ge=-20, le=20)
+    reason: str = Field(min_length=1, max_length=500)
+
+
+class StrategySettings(ApiModel):
+    openers: list[OpenerVariant] = Field(default_factory=list, max_length=8)
+    item_overrides: list[ItemOverride] = Field(default_factory=list, max_length=100)
+    augment_conditions: list[AugmentCondition] = Field(
+        default_factory=list, max_length=30
+    )
+
+    @model_validator(mode="after")
+    def unique_entries(self):
+        if len({o.name for o in self.openers}) != len(self.openers):
+            raise ValueError("Duplicate opener names")
+        pairs = [(o.champion_api_name, o.item_api_name) for o in self.item_overrides]
+        if len(set(pairs)) != len(pairs):
+            raise ValueError("Duplicate item overrides")
+        return self
+
+
 class CompositionConfiguration(ApiModel):
     schema_version: Literal[1] = 1
     source_id: str = Field(min_length=1)
@@ -55,6 +99,7 @@ class CompositionConfiguration(ApiModel):
     units: list[UnitPriorityDecision] = Field(default_factory=list)
     components: list[PriorityDecision]
     augments: list[PriorityDecision]
+    strategy: StrategySettings = Field(default_factory=StrategySettings)
     notes: str = ""
     updated_at: datetime | None = None
 

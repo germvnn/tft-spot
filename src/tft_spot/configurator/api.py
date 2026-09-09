@@ -135,7 +135,7 @@ def recommendations(spot: Spot) -> dict[str, object]:
                     {"sourceId": entry["sourceId"], "reason": "configuration_not_ready"}
                 )
                 continue
-            compositions.append(compile_workspace(workspace, augment_aliases))
+            compositions.append(compile_workspace(workspace, augment_aliases, catalogs))
             presentation[entry["sourceId"]] = {
                 "mainChampion": workspace["source"]["mainChampion"],
                 "finalUnits": workspace["finalUnits"],

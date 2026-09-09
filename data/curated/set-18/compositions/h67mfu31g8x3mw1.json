@@ -8,6 +8,28 @@
     "components": 30,
     "augments": 30
   },
+  "units": [
+    {
+      "apiName": "DA_18_Kobuko",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_18_RekSai",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_18_Veigar",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_18_Teemo",
+      "priority": "medium",
+      "core": false
+    }
+  ],
   "components": [
     {
       "apiName": "DA_Component_TearOfTheGoddess",
@@ -68,6 +90,11 @@
       "priority": "medium"
     }
   ],
+  "strategy": {
+    "openers": [],
+    "itemOverrides": [],
+    "augmentConditions": []
+  },
   "notes": "",
-  "updatedAt": "2026-09-08T05:55:03.984773Z"
+  "updatedAt": "2026-09-09T05:29:45.265972Z"
 }

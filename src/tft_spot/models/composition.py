@@ -7,6 +7,7 @@ from tft_spot.models.configuration import (
     CompositionConfiguration,
     PriorityDecision,
     ScoringWeights,
+    StrategySettings,
     UnitPriorityDecision,
 )
 
@@ -21,6 +22,8 @@ class EngineComposition(ApiModel):
     status: Literal["ready"]
     title: str
     weights: ScoringWeights = Field(default_factory=ScoringWeights)
+    strategy: StrategySettings = Field(default_factory=StrategySettings)
+    item_context: dict = Field(default_factory=dict)
     units: list[UnitPriorityDecision]
     components: list[ComponentDemand]
     augments: list[PriorityDecision]

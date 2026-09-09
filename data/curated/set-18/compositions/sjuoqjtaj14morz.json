@@ -8,6 +8,28 @@
     "components": 30,
     "augments": 30
   },
+  "units": [
+    {
+      "apiName": "DA_Karma18",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_18_Yorick",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_Gromp18_AP",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_18_MasterYi_AD",
+      "priority": "medium",
+      "core": false
+    }
+  ],
   "components": [
     {
       "apiName": "DA_Component_RecurveBow",
@@ -60,6 +82,11 @@
       "priority": "medium"
     }
   ],
+  "strategy": {
+    "openers": [],
+    "itemOverrides": [],
+    "augmentConditions": []
+  },
   "notes": "",
-  "updatedAt": "2026-09-08T05:53:20.583321Z"
+  "updatedAt": "2026-09-09T05:29:45.180452Z"
 }

@@ -16,10 +16,10 @@ PRIORITY_VALUES = {
 COPY_SIGNAL = (0, 1, 3, 5, 8)
 SUPPORT_SIGNAL_TARGET = 4.0
 SIGNAL_PER_UNIT = 8.0
-SCORING_VERSION = "stage-2-1-v2.2"
+SCORING_VERSION = "stage-2-1-v3.0"
 
 
-def score_composition(comp: EngineComposition, spot: Spot) -> dict[str, Any]:
+def _score_composition(comp: EngineComposition, spot: Spot) -> dict[str, Any]:
     if comp.set_number != spot.set_number:
         raise ValueError("Composition and spot must belong to the same set")
     copies: Counter[str] = Counter()
@@ -85,6 +85,21 @@ def score_composition(comp: EngineComposition, spot: Spot) -> dict[str, Any]:
         if owned
         else 0.0
     )
+    from tft_spot.engine.item_fit import allocate_items
+
+    avoided = {d.api_name for d in comp.components if d.priority == "avoid"}
+    context = {
+        **comp.item_context,
+        "options": [
+            o
+            for o in comp.item_context.get("options", [])
+            if not avoided.intersection(o["recipe"])
+        ],
+    }
+    item_plan = allocate_items(context, owned, copies) if comp.item_context else None
+    base_component_score = component_score
+    if item_plan and item_plan["available"] and sum(owned.values()) >= 2:
+        component_score = 0.75 * component_score + 0.25 * item_plan["fit"]
     decisions = {d.api_name: d.priority for d in comp.augments}
     essential = next(
         (d.api_name for d in comp.augments if d.priority == "essential"), None
@@ -100,6 +115,29 @@ def score_composition(comp: EngineComposition, spot: Spot) -> dict[str, Any]:
         elif priority == "avoid":
             reason = "augment_avoided"
         augment_score = 100 * PRIORITY_VALUES.get(priority or "avoid", 0.0)
+        conditions: list[dict[str, Any]] = []
+        for rule in comp.strategy.augment_conditions:
+            if rule.augment_api_name != name:
+                continue
+            copy_match = copies[rule.champion_api_name] >= rule.min_copies
+            item_match = rule.item_api_name is None or any(
+                option["itemApiName"] == rule.item_api_name
+                and option["holderApiName"] == rule.champion_api_name
+                for option in (item_plan or {}).get("candidateOptions", [])
+            )
+            matched = copy_match and item_match
+            conditions.append(
+                {
+                    "reason": rule.reason,
+                    "matched": matched,
+                    "bonus": rule.bonus if matched else 0,
+                    "championApiName": rule.champion_api_name,
+                    "itemApiName": rule.item_api_name,
+                }
+            )
+        base_augment_score = augment_score
+        adjustment = max(-20, min(20, sum(c["bonus"] for c in conditions)))
+        augment_score = max(0, min(100, augment_score + adjustment))
         contributions = {
             "units": unit_score * comp.weights.units / 100,
             "components": component_score * comp.weights.components / 100,
@@ -111,6 +149,14 @@ def score_composition(comp: EngineComposition, spot: Spot) -> dict[str, Any]:
                 "priority": priority,
                 "eligible": reason is None,
                 "reason": reason,
+                "assessment": "unassessed"
+                if reason == "augment_not_listed"
+                else ("blocked" if reason else "assessed"),
+                "augmentContext": {
+                    "baseFit": base_augment_score,
+                    "adjustment": augment_score - base_augment_score,
+                    "conditions": conditions,
+                },
                 "score": sum(contributions.values()) if reason is None else None,
                 "dimensionScores": {
                     "units": unit_score,
@@ -125,6 +171,14 @@ def score_composition(comp: EngineComposition, spot: Spot) -> dict[str, Any]:
     return {
         "sourceId": comp.source_id,
         "title": comp.title,
+        "assessment": "assessed"
+        if best
+        else (
+            "unassessed"
+            if any(v["assessment"] == "unassessed" for v in variants)
+            else "blocked"
+        ),
+        "resourceFit": {"units": unit_score, "components": component_score},
         "eligible": best is not None,
         "score": best["score"] if best else None,
         "bestAugmentApiName": best["augmentApiName"] if best else None,
@@ -143,9 +197,38 @@ def score_composition(comp: EngineComposition, spot: Spot) -> dict[str, Any]:
                 "supportSignalTarget": support_target,
             },
             "components": components,
+            "itemPlan": {k: v for k, v in item_plan.items() if k != "candidateOptions"}
+            if item_plan
+            else None,
+            "componentFit": {
+                "baseFit": base_component_score,
+                "combinedFit": component_score,
+                "planShare": 0.25
+                if item_plan and item_plan["available"] and sum(owned.values()) >= 2
+                else 0,
+            },
         },
         "weights": comp.weights.model_dump(),
     }
+
+
+def score_composition(comp: EngineComposition, spot: Spot) -> dict[str, Any]:
+    result = _score_composition(comp, spot)
+    options = [("Opener źródłowy", result)]
+    for opener in comp.strategy.openers:
+        candidate = _score_composition(
+            comp.model_copy(update={"units": opener.units}), spot
+        )
+        options.append((opener.name, candidate))
+    name, best = max(options, key=lambda entry: entry[1]["resourceFit"]["units"])
+    best["evidence"]["opener"] = {
+        "name": name,
+        "alternatives": [
+            {"name": title, "unitFit": entry["resourceFit"]["units"]}
+            for title, entry in options
+        ],
+    }
+    return best
 
 
 def rank_compositions(

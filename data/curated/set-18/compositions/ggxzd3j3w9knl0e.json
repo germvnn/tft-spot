@@ -8,6 +8,28 @@
     "components": 30,
     "augments": 30
   },
+  "units": [
+    {
+      "apiName": "DA_18_Yorick",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_Cinderling18",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_Gromp18_AP",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_Scuttlecrab18",
+      "priority": "medium",
+      "core": false
+    }
+  ],
   "components": [
     {
       "apiName": "DA_Component_BFSword",
@@ -56,6 +78,11 @@
       "priority": "medium"
     }
   ],
+  "strategy": {
+    "openers": [],
+    "itemOverrides": [],
+    "augmentConditions": []
+  },
   "notes": "",
-  "updatedAt": "2026-09-08T05:53:20.573864Z"
+  "updatedAt": "2026-09-09T05:29:45.164554Z"
 }

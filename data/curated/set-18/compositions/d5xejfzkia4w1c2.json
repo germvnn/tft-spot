@@ -8,6 +8,28 @@
     "components": 30,
     "augments": 30
   },
+  "units": [
+    {
+      "apiName": "DA_18_Caitlyn",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_18_Rakan",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_18_Yorick",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_18_Tristana",
+      "priority": "medium",
+      "core": false
+    }
+  ],
   "components": [
     {
       "apiName": "DA_Component_RecurveBow",
@@ -60,6 +82,11 @@
       "priority": "medium"
     }
   ],
+  "strategy": {
+    "openers": [],
+    "itemOverrides": [],
+    "augmentConditions": []
+  },
   "notes": "",
-  "updatedAt": "2026-09-08T05:53:20.602817Z"
+  "updatedAt": "2026-09-09T05:29:45.212305Z"
 }

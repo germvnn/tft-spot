@@ -12,6 +12,7 @@ from tft_spot.models.configuration import (
     CompositionConfiguration,
     PriorityDecision,
     ScoringWeights,
+    StrategySettings,
     UnitPriorityDecision,
 )
 
@@ -161,6 +162,23 @@ class ConfigurationRepository:
                 "augmentTip": guide.get("augmentsTip"),
                 "tips": guide.get("tips", []),
             },
+            "strategyCatalog": {
+                "champions": [
+                    self._entity_card(c, "champions", ("championSquareIcon",))
+                    for c in champions.values()
+                    if c.get("set") == set_number and c.get("cost") in (1, 2, 3)
+                ],
+                "targets": [
+                    self._entity_card(c, "champions", ("championSquareIcon",))
+                    for c in champions.values()
+                    if c.get("set") == set_number
+                ],
+                "items": [
+                    self._entity_card(i, "items", ("icon",))
+                    for i in items.values()
+                    if i.get("set") == set_number and i.get("type") == "craftables"
+                ],
+            },
             "finalUnits": final_units,
             "earlyUnits": early_units,
             "itemRecommendations": item_recommendations,
@@ -173,6 +191,12 @@ class ConfigurationRepository:
         self, source_id: str, configuration: CompositionConfiguration
     ) -> CompositionConfiguration:
         workspace = self.get_workspace(source_id)
+        from tft_spot.engine.compiler import validate_strategy
+
+        try:
+            validate_strategy(configuration, self._load_catalogs())
+        except ValueError as error:
+            raise ConfiguratorDataError(str(error)) from error
         source = workspace["source"]
         if configuration.source_id != source_id:
             raise ConfiguratorDataError("Configuration sourceId does not match route")
@@ -276,6 +300,7 @@ class ConfigurationRepository:
                             )
                             for decision in current.augments
                         ],
+                        strategy=current.strategy,
                         notes=current.notes,
                         updated_at=current.updated_at,
                     ),
@@ -404,6 +429,7 @@ class ConfigurationRepository:
                 )
                 for api_name in augment_api_names
             ],
+            strategy=existing.strategy if existing else StrategySettings(),
             notes=existing.notes if existing else "",
             updated_at=existing.updated_at if existing else None,
         )
@@ -435,6 +461,7 @@ class ConfigurationRepository:
                 f"/game-assets/{category}/{quote(filename)}" if filename else None
             ),
             "type": entity.get("type"),
+            **({"role": entity["role"]} if "role" in entity else {}),
         }
 
     @staticmethod

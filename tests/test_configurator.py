@@ -557,3 +557,32 @@ def test_core_defaults_false_and_survives_save_bootstrap_and_compilation(
         > score_composition(after, spot)["score"]
     )
     assert score_composition(after, spot)["evidence"]["units"][0]["core"] is True
+
+
+def test_strategy_survives_save_reload_bootstrap_and_rejects_unknown_units(
+    tmp_path, monkeypatch
+):
+    guide = build_source_fixture(tmp_path)
+    monkeypatch.setattr(repository_module, "extract_queried_guide", lambda _: guide)
+    repo = ConfigurationRepository(tmp_path)
+    config = CompositionConfiguration.model_validate(
+        repo.get_workspace("source-1")["configuration"]
+    )
+    payload = config.model_dump()
+    payload["strategy"] = {
+        "openers": [
+            {"name": "Alternative", "units": [{"apiName": "DA_Early", "core": True}]}
+        ]
+    }
+    config = CompositionConfiguration.model_validate(payload)
+    repo.save_configuration("source-1", config)
+    assert (
+        repo.get_workspace("source-1")["configuration"]["strategy"]
+        == config.strategy.model_dump()
+    )
+    assert repo.bootstrap_ready_configurations()[0].strategy == config.strategy
+    payload["strategy"]["openers"][0]["units"][0]["apiName"] = "unknown"
+    with pytest.raises(ValueError, match="Unknown"):
+        repo.save_configuration(
+            "source-1", CompositionConfiguration.model_validate(payload)
+        )

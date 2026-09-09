@@ -8,6 +8,28 @@
     "components": 30,
     "augments": 30
   },
+  "units": [
+    {
+      "apiName": "DA_Karma18",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_18_Leona",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_18_Ornn",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_18_LeBlanc",
+      "priority": "medium",
+      "core": false
+    }
+  ],
   "components": [
     {
       "apiName": "DA_Component_TearOfTheGoddess",
@@ -60,6 +82,11 @@
       "priority": "medium"
     }
   ],
+  "strategy": {
+    "openers": [],
+    "itemOverrides": [],
+    "augmentConditions": []
+  },
   "notes": "",
-  "updatedAt": "2026-09-08T05:53:20.580259Z"
+  "updatedAt": "2026-09-09T05:29:45.174806Z"
 }
