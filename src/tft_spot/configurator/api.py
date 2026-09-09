@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from threading import Lock
 
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
 
+from tft_spot.configurator.access import data_access, data_lock
+from tft_spot.configurator.presentation import entity_card, require_entity
 from tft_spot.configurator.repository import (
     CompositionNotFoundError,
     ConfigurationRepository,
@@ -38,7 +39,7 @@ ROOT = Path(
     )
 ).resolve()
 repository = ConfigurationRepository(ROOT)
-data_write_lock = Lock()
+
 
 app = FastAPI(
     title="TFT Spot Configurator API",
@@ -52,6 +53,7 @@ def health() -> dict[str, str]:
 
 
 @app.get("/api/compositions")
+@data_access
 def list_compositions() -> dict[str, object]:
     try:
         compositions = repository.list_compositions()
@@ -63,7 +65,7 @@ def list_compositions() -> dict[str, object]:
 @app.post("/api/compositions/bootstrap-ready")
 def bootstrap_ready_configurations() -> dict[str, object]:
     try:
-        with data_write_lock:
+        with data_lock:
             saved = repository.bootstrap_ready_configurations()
     except ConfiguratorDataError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
@@ -76,13 +78,14 @@ def bootstrap_ready_configurations() -> dict[str, object]:
 @app.post("/api/compositions/refresh-source")
 def refresh_source() -> dict[str, object]:
     try:
-        with data_write_lock:
+        with data_lock:
             return refresh_tft_academy(ROOT, repository).as_dict()
     except SourceRefreshError as error:
         raise HTTPException(status_code=502, detail=str(error)) from error
 
 
 @app.get("/api/compositions/{source_id}")
+@data_access
 def get_composition(source_id: str) -> dict[str, object]:
     try:
         return repository.get_workspace(source_id)
@@ -98,7 +101,7 @@ def save_configuration(
     configuration: CompositionConfiguration,
 ) -> dict[str, object]:
     try:
-        with data_write_lock:
+        with data_lock:
             saved = repository.save_configuration(source_id, configuration)
     except CompositionNotFoundError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
@@ -116,12 +119,14 @@ if repository.assets_dir.exists():
 
 
 @app.post("/api/recommendations")
+@data_access
 def recommendations(spot: Spot) -> dict[str, object]:
     try:
-        catalogs = repository._load_catalogs()
+        snapshot = repository.load_snapshot()
+        catalogs = snapshot.catalogs
         augment_aliases = build_augment_aliases(catalogs["augments"])
         for name in spot.offered_augments:
-            entity = repository._require(catalogs["augments"], name, "augment")
+            entity = require_entity(catalogs["augments"], name, "augment")
             if entity["set"] != spot.set_number:
                 raise ValueError(f"Augment belongs to a different set: {name}")
         spot = Spot.model_validate(
@@ -133,18 +138,16 @@ def recommendations(spot: Spot) -> dict[str, object]:
             }
         )
         for unit in spot.units:
-            repository._require(catalogs["champions"], unit.api_name, "champion")
+            require_entity(catalogs["champions"], unit.api_name, "champion")
         for component in spot.components:
-            item = repository._require(
-                catalogs["items"], component.api_name, "component"
-            )
+            item = require_entity(catalogs["items"], component.api_name, "component")
             if item.get("type") != "components":
                 raise ValueError(f"Expected a loose component: {component.api_name}")
         compositions = []
         presentation = {}
         skipped = []
-        for entry in repository.list_compositions():
-            workspace = repository.get_workspace(entry["sourceId"])
+        for entry in repository.list_compositions(snapshot):
+            workspace = repository.get_workspace(entry["sourceId"], snapshot=snapshot)
             if workspace["source"]["set"] != spot.set_number:
                 continue
             if workspace["configuration"]["status"] != "ready":
@@ -174,13 +177,14 @@ def recommendations(spot: Spot) -> dict[str, object]:
 
 
 @app.get("/api/spot-catalog")
+@data_access
 def spot_catalog() -> dict[str, object]:
     """Preserve source order and entities; the player UI selects costs 1-3."""
     try:
-        catalogs = repository._load_catalogs()
+        catalogs = repository.load_catalogs()
         champions = [
             {
-                **repository._entity_card(
+                **entity_card(
                     entity, "champions", ("championSquareIcon", "championIcon")
                 ),
                 "sourceId": entity["id"],
@@ -191,7 +195,7 @@ def spot_catalog() -> dict[str, object]:
         ]
         components = [
             {
-                **repository._entity_card(entity, "items", ("icon",)),
+                **entity_card(entity, "items", ("icon",)),
                 "sourceId": entity["id"],
                 "setNumber": entity["set"],
             }
@@ -209,7 +213,7 @@ def spot_catalog() -> dict[str, object]:
                 raise ValueError(f"Unknown augment tier: {entity['tier']}")
             augments.append(
                 {
-                    **repository._entity_card(entity, "augments", ("icon",)),
+                    **entity_card(entity, "augments", ("icon",)),
                     "sourceId": entity["id"],
                     "setNumber": entity["set"],
                     "tier": entity["tier"],
@@ -252,6 +256,7 @@ def simulator_runs() -> dict:
 
 
 @app.post("/api/simulator/runs")
+@data_access
 def simulator_generate(options: SimulationRequest) -> dict:
     try:
         return generate_run(ROOT, options)
@@ -278,6 +283,7 @@ def simulator_review(run_id: str, case_id: int, review: Review) -> dict:
 
 
 @app.post("/api/simulator/runs/{run_id}/replay")
+@data_access
 def simulator_replay(run_id: str) -> dict:
     previous = simulator_load(run_id)
     try:

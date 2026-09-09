@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "sourceId": "vugq3mb2g18t45j",
+  "setNumber": 18,
+  "status": "ready",
+  "weights": {
+    "units": 40,
+    "components": 30,
+    "augments": 30
+  },
+  "units": [
+    {
+      "apiName": "DA_18_Ornn",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_18_Varus",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_18_Xayah",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_18_Shen",
+      "priority": "medium",
+      "core": false
+    }
+  ],
+  "components": [
+    {
+      "apiName": "DA_Component_RecurveBow",
+      "priority": "essential"
+    },
+    {
+      "apiName": "DA_Component_BFSword",
+      "priority": "essential"
+    },
+    {
+      "apiName": "DA_Component_SparringGloves",
+      "priority": "essential"
+    },
+    {
+      "apiName": "DA_Component_ChainVest",
+      "priority": "essential"
+    }
+  ],
+  "augments": [
+    {
+      "apiName": "DA_BackupBows",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_OneBuffTwoBuff",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_Swordsmith",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_CarveAPath",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_SwordOverflow",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_CaretakersFavor",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_BuriedTreasuresIII",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_18_FOURcing",
+      "priority": "medium"
+    }
+  ],
+  "strategy": {
+    "openers": [],
+    "itemOverrides": [],
+    "augmentConditions": []
+  },
+  "notes": "",
+  "updatedAt": "2026-09-09T10:57:15.646431Z"
+}

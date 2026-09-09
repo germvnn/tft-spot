@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "sourceId": "zwyl48qgfldzqq8",
+  "setNumber": 18,
+  "status": "ready",
+  "weights": {
+    "units": 40,
+    "components": 30,
+    "augments": 30
+  },
+  "units": [
+    {
+      "apiName": "DA_18_Rakan",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_18_Yorick",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_Karma18",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_18_Yunara",
+      "priority": "medium",
+      "core": false
+    }
+  ],
+  "components": [
+    {
+      "apiName": "DA_Component_TearOfTheGoddess",
+      "priority": "essential"
+    },
+    {
+      "apiName": "DA_Component_BFSword",
+      "priority": "essential"
+    },
+    {
+      "apiName": "DA_Component_SparringGloves",
+      "priority": "essential"
+    },
+    {
+      "apiName": "DA_Component_NeedlesslyLargeRod",
+      "priority": "essential"
+    },
+    {
+      "apiName": "DA_Component_GiantsBelt",
+      "priority": "essential"
+    }
+  ],
+  "augments": [
+    {
+      "apiName": "DA_JeweledLotus_I",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_JeweledLotus_II",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_18_FOURcing",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_Staffsmith",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_CyberneticUplink_Gold",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_WandOverflow",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_18_CovenTraitAugment_LootToAP",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_TimeSkip",
+      "priority": "medium"
+    }
+  ],
+  "strategy": {
+    "openers": [],
+    "itemOverrides": [],
+    "augmentConditions": []
+  },
+  "notes": "",
+  "updatedAt": "2026-09-09T10:57:15.638841Z"
+}

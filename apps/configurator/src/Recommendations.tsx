@@ -1,3 +1,4 @@
+import { readJson as request } from "./api";
 import StrategyEvidence, { type StrategyEvidenceData } from "./StrategyEvidence";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -46,6 +47,7 @@ type Result = {
   requiredAugmentApiName: string | null;
   mainChampion: Card | null;
   finalUnits: Card[];
+  tier: string | null;
   style: string | null;
   weights: Record<Dimension, number>;
   variants: Variant[];
@@ -83,24 +85,6 @@ const labels: Record<Dimension, string> = {
   augments: "Augment",
 };
 
-async function request<T>(url: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(url, init);
-  if (!response.ok) {
-    if (response.status === 404)
-      throw new Error(
-        "Serwer nie udostępnia jeszcze tego widoku. Uruchom ponownie API po aktualizacji aplikacji.",
-      );
-    let detail = "Nie udało się pobrać danych. Spróbuj ponownie.";
-    try {
-      const body = await response.json();
-      if (typeof body.detail === "string") detail = body.detail;
-    } catch {
-      /* Keep a readable network error. */
-    }
-    throw new Error(detail);
-  }
-  return response.json();
-}
 
 function Picture({
   card,
@@ -672,9 +656,14 @@ export default function Recommendations({ active }: { active: boolean }) {
                         </span>
                         <Picture card={entry.mainChampion} />
                         <div className="result-title">
-                          <span className="spot-eyebrow">
-                            {entry.style ?? "Kierunek"}
-                          </span>
+                          <div className="result-meta">
+                            <span className="spot-eyebrow">
+                              {entry.style ?? "Kierunek"}
+                            </span>
+                            <span className="result-tier">
+                              TIER {entry.tier || "—"}
+                            </span>
+                          </div>
                           <h3>{entry.title}</h3>
                           <div className="result-augment">
                             <Picture

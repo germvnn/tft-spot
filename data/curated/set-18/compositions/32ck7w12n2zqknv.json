@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "sourceId": "32ck7w12n2zqknv",
+  "setNumber": 18,
+  "status": "ready",
+  "weights": {
+    "units": 40,
+    "components": 30,
+    "augments": 30
+  },
+  "units": [
+    {
+      "apiName": "DA_18_Yorick",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_Cinderling18",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_Gromp18_AP",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_Scuttlecrab18",
+      "priority": "medium",
+      "core": false
+    }
+  ],
+  "components": [
+    {
+      "apiName": "DA_Component_BFSword",
+      "priority": "essential"
+    },
+    {
+      "apiName": "DA_Component_SparringGloves",
+      "priority": "essential"
+    },
+    {
+      "apiName": "DA_Component_GiantsBelt",
+      "priority": "essential"
+    }
+  ],
+  "augments": [
+    {
+      "apiName": "DA_18_BigGrabBag",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_18_PrimalAugmentPlus_Nidalee",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_CaretakersFavor",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_Swordsmith",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_18_PrimalAugmentPlus_Sivir",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_CarveAPath",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_18_FOURcing",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_DeadlierBlades",
+      "priority": "medium"
+    }
+  ],
+  "strategy": {
+    "openers": [],
+    "itemOverrides": [],
+    "augmentConditions": []
+  },
+  "notes": "",
+  "updatedAt": "2026-09-09T10:57:15.604948Z"
+}

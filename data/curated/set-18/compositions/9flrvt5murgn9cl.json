@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "sourceId": "9flrvt5murgn9cl",
+  "setNumber": 18,
+  "status": "ready",
+  "weights": {
+    "units": 40,
+    "components": 30,
+    "augments": 30
+  },
+  "units": [
+    {
+      "apiName": "DA_18_Ornn",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_18_Alistar",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_18_LeBlanc",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_18_KhaZix",
+      "priority": "medium",
+      "core": false
+    }
+  ],
+  "components": [
+    {
+      "apiName": "DA_Component_BFSword",
+      "priority": "essential"
+    },
+    {
+      "apiName": "DA_Component_ChainVest",
+      "priority": "essential"
+    },
+    {
+      "apiName": "DA_Component_NeedlesslyLargeRod",
+      "priority": "essential"
+    },
+    {
+      "apiName": "DA_Component_TearOfTheGoddess",
+      "priority": "essential"
+    },
+    {
+      "apiName": "DA_Component_SparringGloves",
+      "priority": "essential"
+    }
+  ],
+  "augments": [
+    {
+      "apiName": "DA_ChampDelivery",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_PandorasBench",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_FlowingTears",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_AdvancedLoanPlus",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_HeroicGrabBagPlusPlus",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_LegionOfThrees",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_LuckyGlovesPlus",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_PrismaticTicket",
+      "priority": "medium"
+    }
+  ],
+  "strategy": {
+    "openers": [],
+    "itemOverrides": [],
+    "augmentConditions": []
+  },
+  "notes": "",
+  "updatedAt": "2026-09-09T10:57:15.426164Z"
+}

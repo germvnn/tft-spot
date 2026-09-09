@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "sourceId": "m0fvsi0urznj3sd",
+  "setNumber": 18,
+  "status": "ready",
+  "weights": {
+    "units": 40,
+    "components": 30,
+    "augments": 30
+  },
+  "units": [
+    {
+      "apiName": "DA_18_Ornn",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_18_Xayah",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_18_Varus",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_18_Rakan",
+      "priority": "medium",
+      "core": false
+    }
+  ],
+  "components": [
+    {
+      "apiName": "DA_Component_RecurveBow",
+      "priority": "essential"
+    },
+    {
+      "apiName": "DA_Component_NeedlesslyLargeRod",
+      "priority": "essential"
+    },
+    {
+      "apiName": "DA_Component_NegatronCloak",
+      "priority": "essential"
+    },
+    {
+      "apiName": "DA_Component_ChainVest",
+      "priority": "essential"
+    },
+    {
+      "apiName": "DA_Component_BFSword",
+      "priority": "essential"
+    }
+  ],
+  "augments": [
+    {
+      "apiName": "DA_EarlyLearnings",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_NoScoutNoPivot",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_MissedConnections",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_PandorasBench",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_SoloPlate",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_PrismaticTicket",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_18_ElderwoodTraitAugment",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_WorththeWait",
+      "priority": "medium"
+    }
+  ],
+  "strategy": {
+    "openers": [],
+    "itemOverrides": [],
+    "augmentConditions": []
+  },
+  "notes": "",
+  "updatedAt": "2026-09-09T10:57:15.571201Z"
+}

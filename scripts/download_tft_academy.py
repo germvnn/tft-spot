@@ -3,8 +3,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import math
-import re
+import sys
 import time
 import urllib.error
 import urllib.parse
@@ -16,6 +15,12 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
+from tft_spot.data.tft_academy import (
+    TftAcademyDataError,
+    extract_guides,
+)
+
 DEFAULT_DATA_DIR = ROOT / "data"
 DEFAULT_BASE_URL = "https://tftacademy.com"
 FILES_BASE_URL = "https://api.tftacademy.com/api/files"
@@ -43,8 +48,7 @@ ASSET_FIELDS = {
 }
 
 
-class SnapshotError(RuntimeError):
-    pass
+SnapshotError = TftAcademyDataError
 
 
 @dataclass(frozen=True)
@@ -141,88 +145,6 @@ def manifest_entry(
     }
 
 
-def extract_composition_slugs(html: str, set_number: int) -> list[str]:
-    pattern = re.compile(
-        r"""href=["']/tierlist/comps/(set-"""
-        + re.escape(str(set_number))
-        + r"""-[^/"'?#]+)"""
-    )
-    return list(dict.fromkeys(pattern.findall(html)))
-
-
-def unflatten_sveltekit_data(values: list[Any]) -> Any:
-    if not values:
-        raise SnapshotError("SvelteKit data array is empty")
-    memo: dict[int, Any] = {}
-    special = {
-        -1: None,
-        -2: None,
-        -3: math.nan,
-        -4: math.inf,
-        -5: -math.inf,
-        -6: -0.0,
-    }
-
-    def reference(value: Any) -> Any:
-        if isinstance(value, bool) or not isinstance(value, int):
-            return value
-        if value < 0:
-            return special.get(value)
-        return hydrate(value)
-
-    def hydrate(index: int) -> Any:
-        if index in memo:
-            return memo[index]
-        if index >= len(values):
-            raise SnapshotError(
-                f"SvelteKit reference {index} exceeds data size {len(values)}"
-            )
-        value = values[index]
-        if isinstance(value, dict):
-            result: Any = {}
-            memo[index] = result
-            result.update({key: reference(item) for key, item in value.items()})
-            return result
-        if isinstance(value, list):
-            if value and isinstance(value[0], str):
-                tag = value[0]
-                if tag == "Date":
-                    result = value[1]
-                elif tag == "BigInt":
-                    result = int(value[1])
-                elif tag == "Set":
-                    result = [reference(item) for item in value[1:]]
-                elif tag == "Map":
-                    result = {
-                        reference(value[position]): reference(value[position + 1])
-                        for position in range(1, len(value), 2)
-                    }
-                else:
-                    raise SnapshotError(f"Unsupported SvelteKit tag: {tag!r}")
-                memo[index] = result
-                return result
-            result = []
-            memo[index] = result
-            result.extend(reference(item) for item in value)
-            return result
-        memo[index] = value
-        return value
-
-    return hydrate(0)
-
-
-def extract_queried_guide(payload: dict[str, Any]) -> dict[str, Any]:
-    for node in payload.get("nodes", []):
-        if not isinstance(node, dict) or not isinstance(node.get("data"), list):
-            continue
-        decoded = unflatten_sveltekit_data(node["data"])
-        if isinstance(decoded, dict):
-            guide = decoded.get("queriedGuide")
-            if isinstance(guide, dict):
-                return guide
-    raise SnapshotError("Could not find queriedGuide in SvelteKit response")
-
-
 def download_raw_resources(
     *,
     data_dir: Path,
@@ -232,7 +154,7 @@ def download_raw_resources(
     timeout: float,
     retries: int,
     downloaded_at: str,
-) -> tuple[list[dict[str, Any]], str, str]:
+) -> tuple[list[dict[str, Any]], str]:
     raw_dir = data_dir / "raw" / "tft_academy"
     raw_dir.mkdir(parents=True, exist_ok=True)
     entries: list[dict[str, Any]] = []
@@ -275,71 +197,82 @@ def download_raw_resources(
                 downloaded_at=downloaded_at,
             )
         )
-    return entries, listing.body.decode("utf-8"), listing_url
+    return entries, listing_url
 
 
 def download_compositions(
     *,
     data_dir: Path,
-    base_url: str,
     listing_url: str,
-    listing_html: str,
     set_number: int,
     timeout: float,
     retries: int,
     downloaded_at: str,
-) -> list[dict[str, Any]]:
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     target_dir = data_dir / "raw" / "tft_academy" / "compositions"
-    slugs = extract_composition_slugs(listing_html, set_number)
-    if not slugs:
+    target_dir.mkdir(parents=True, exist_ok=True)
+    listing_data_url = f"{listing_url.rstrip('/')}/__data.json"
+    response = fetch(
+        listing_data_url,
+        timeout=timeout,
+        retries=retries,
+        accept="application/json",
+    )
+    require_content_type(response, "application/json", listing_data_url)
+    try:
+        payload = json.loads(response.body)
+    except json.JSONDecodeError as error:
         raise SnapshotError(
-            f"No Set {set_number} composition links found at {listing_url}"
-        )
+            f"Invalid JSON returned by {listing_data_url}: {error}"
+        ) from error
+    guides = extract_guides(payload)
+
     entries: list[dict[str, Any]] = []
-    seen_ids: dict[str, str] = {}
-    for slug in slugs:
-        url = urllib.parse.urljoin(
-            base_url,
-            f"/tierlist/comps/{slug}/__data.json",
-        )
-        response = fetch(
-            url,
-            timeout=timeout,
-            retries=retries,
-            accept="application/json",
-        )
-        require_content_type(response, "application/json", url)
-        guide = extract_queried_guide(json.loads(response.body))
+    seen_ids: set[str] = set()
+    target = target_dir / "guides.json"
+    response_file = target.relative_to(data_dir.parent).as_posix()
+    response_sha256 = hashlib.sha256(response.body).hexdigest()
+    for guide in guides:
+        try:
+            guide_set = int(guide["set"])
+        except (KeyError, TypeError, ValueError) as error:
+            raise SnapshotError("Guide has an invalid set number") from error
+        if guide_set != set_number:
+            continue
+        if guide.get("id") is None:
+            raise SnapshotError("Guide has a missing id")
         source_id = str(guide["id"])
-        response_slug = str(guide["compSlug"])
-        if response_slug != slug:
-            raise SnapshotError(f"Route {slug!r} returned {response_slug!r}")
-        if source_id in seen_ids and seen_ids[source_id] != slug:
-            raise SnapshotError(
-                f"Source id {source_id!r} belongs to two composition routes"
-            )
-        seen_ids[source_id] = slug
-        target = target_dir / f"{source_id}.json"
-        write_bytes(target, response.body)
+        slug = guide.get("compSlug")
+        if slug is not None and not isinstance(slug, str):
+            raise SnapshotError(f"Guide {source_id!r} has an invalid compSlug")
+        if not source_id or Path(source_id).name != source_id:
+            raise SnapshotError(f"Unsafe guide id: {source_id!r}")
+        if source_id in seen_ids:
+            raise SnapshotError(f"Duplicate guide id: {source_id!r}")
+        seen_ids.add(source_id)
         entries.append(
             {
                 "visible_name": str(
-                    guide.get("title") or guide.get("metaTitle") or slug
+                    guide.get("title") or guide.get("metaTitle") or slug or source_id
                 ),
                 "backend_id": source_id,
                 "slug": slug,
-                "request_url": url,
-                "response_file": target.relative_to(data_dir.parent).as_posix(),
+                "request_url": listing_data_url,
+                "response_file": response_file,
                 "status": response.status,
                 "content_type": response.content_type,
                 "size_bytes": len(response.body),
-                "sha256": hashlib.sha256(response.body).hexdigest(),
+                "sha256": response_sha256,
             }
         )
+    if not entries:
+        raise SnapshotError(f"No Set {set_number} guides found at {listing_data_url}")
+
+    write_bytes(target, response.body)
     index = {
         "captured_at": downloaded_at,
         "source_page": listing_url,
-        "hover_request_pattern": "GET /tierlist/comps/{slug}/__data.json",
+        "discovery_request": "GET /tierlist/comps/__data.json",
         "set": set_number,
         "visible_name_to_backend_id": {
             entry["visible_name"]: entry["backend_id"] for entry in entries
@@ -347,7 +280,12 @@ def download_compositions(
         "compositions": entries,
     }
     write_json(target_dir / "index.json", index)
-    return entries
+    return entries, manifest_entry(
+        url=listing_data_url,
+        filename="compositions/guides.json",
+        payload=response,
+        downloaded_at=downloaded_at,
+    )
 
 
 def build_asset_requests(data_dir: Path) -> list[AssetRequest]:
@@ -501,7 +439,7 @@ def main() -> None:
     base_url = args.base_url.rstrip("/") + "/"
     downloaded_at = utc_now()
     print(f"Downloading TFT Academy Set {args.set_number} to {data_dir}")
-    resources, listing_html, listing_url = download_raw_resources(
+    resources, listing_url = download_raw_resources(
         data_dir=data_dir,
         base_url=base_url,
         listing_path=args.listing_path,
@@ -510,16 +448,15 @@ def main() -> None:
         retries=args.retries,
         downloaded_at=downloaded_at,
     )
-    compositions = download_compositions(
+    compositions, guide_resource = download_compositions(
         data_dir=data_dir,
-        base_url=base_url,
         listing_url=listing_url,
-        listing_html=listing_html,
         set_number=args.set_number,
         timeout=args.timeout,
         retries=args.retries,
         downloaded_at=downloaded_at,
     )
+    resources.append(guide_resource)
     write_json(
         data_dir / "raw" / "tft_academy" / "manifest.json",
         {

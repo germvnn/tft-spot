@@ -84,3 +84,18 @@ def extract_queried_guide(payload: dict[str, Any]) -> dict[str, Any]:
             if isinstance(guide, dict):
                 return guide
     raise TftAcademyDataError("Could not find queriedGuide in SvelteKit response")
+
+
+def extract_guides(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    for node in payload.get("nodes", []):
+        if not isinstance(node, dict) or not isinstance(node.get("data"), list):
+            continue
+        decoded = unflatten_sveltekit_data(node["data"])
+        if not isinstance(decoded, dict):
+            continue
+        guides = decoded.get("guides")
+        if isinstance(guides, list) and all(
+            isinstance(guide, dict) for guide in guides
+        ):
+            return guides
+    raise TftAcademyDataError("Could not find guides in SvelteKit response")

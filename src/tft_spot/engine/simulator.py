@@ -12,6 +12,7 @@ from uuid import UUID, uuid4
 
 from pydantic import Field
 
+from tft_spot.configurator.presentation import entity_card
 from tft_spot.configurator.repository import ConfigurationRepository
 from tft_spot.data.augment_identity import build_augment_aliases
 from tft_spot.engine.compiler import compile_workspace
@@ -189,9 +190,13 @@ def generate_run(
     root: Path, options: SimulationRequest, previous: dict[str, Any] | None = None
 ) -> dict[str, Any]:
     repo = ConfigurationRepository(root)
-    catalogs = repo._load_catalogs()
+    snapshot = repo.load_snapshot()
+    catalogs = snapshot.catalogs
     aliases = build_augment_aliases(catalogs["augments"])
-    workspaces = [repo.get_workspace(c["sourceId"]) for c in repo.list_compositions()]
+    workspaces = [
+        repo.get_workspace(c["sourceId"], snapshot=snapshot)
+        for c in repo.list_compositions(snapshot)
+    ]
     workspaces = [
         w
         for w in workspaces
@@ -249,7 +254,7 @@ def generate_run(
         ("augments", ("icon",)),
     ):
         for name, entity in catalogs[category].items():
-            display[name] = repo._entity_card(entity, category, fields)
+            display[name] = entity_card(entity, category, fields)
     cases = []
     source_cases = previous["cases"] if previous else [None] * options.count
     for index, old_case in enumerate(source_cases):
@@ -409,7 +414,11 @@ def generate_run(
                 "spot": spot.model_dump(),
                 "rankings": rankings,
                 "review": None,
-                "referenceReview": old_case.get("review") if old_case else None,
+                "referenceReview": (
+                    old_case.get("review") or old_case.get("referenceReview")
+                )
+                if old_case
+                else None,
                 "previousScores": {
                     r["sourceId"]: r["score"] for r in old_case["rankings"]
                 }

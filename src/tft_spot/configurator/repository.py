@@ -5,9 +5,18 @@ from collections.abc import Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
-from urllib.parse import quote
 
-from tft_spot.data.tft_academy import extract_queried_guide
+from tft_spot.configurator.presentation import build_workspace
+from tft_spot.data.augment_identity import (
+    build_augment_aliases,
+    resolve_augment_decisions,
+)
+from tft_spot.data.snapshot import ConfiguratorDataError, SourceSnapshot
+from tft_spot.data.tft_academy import (
+    TftAcademyDataError,
+    extract_guides,
+    extract_queried_guide,
+)
 from tft_spot.models.configuration import (
     CompositionConfiguration,
     PriorityDecision,
@@ -15,10 +24,7 @@ from tft_spot.models.configuration import (
     StrategySettings,
     UnitPriorityDecision,
 )
-
-
-class ConfiguratorDataError(ValueError):
-    pass
+from tft_spot.models.strategy import reconcile_strategy, validate_strategy
 
 
 class CompositionNotFoundError(ConfiguratorDataError):
@@ -31,8 +37,14 @@ class ConfigurationRepository:
         self.raw_dir = root / "data" / "raw" / "tft_academy"
         self.assets_dir = root / "data" / "assets"
 
-    def list_compositions(self) -> list[dict[str, Any]]:
-        index = self._read_json(self.raw_dir / "compositions" / "index.json")
+    def list_compositions(
+        self, snapshot: SourceSnapshot | None = None
+    ) -> list[dict[str, Any]]:
+        index = (
+            snapshot.index
+            if snapshot
+            else self._read_json(self.raw_dir / "compositions" / "index.json")
+        )
         result: list[dict[str, Any]] = []
         for position, entry in enumerate(index["compositions"]):
             source_id = str(entry["backend_id"])
@@ -40,7 +52,7 @@ class ConfigurationRepository:
                 {
                     "sourceId": source_id,
                     "title": str(entry["visible_name"]),
-                    "slug": str(entry["slug"]),
+                    "slug": entry.get("slug"),
                     "position": position,
                     "configured": any(
                         (self.root / "data" / "curated").glob(
@@ -56,142 +68,45 @@ class ConfigurationRepository:
         source_id: str,
         *,
         reconcile_configuration: bool = False,
+        snapshot: SourceSnapshot | None = None,
     ) -> dict[str, Any]:
-        _index, entry = self._find_entry(source_id)
-        response_path = self.root / str(entry["response_file"])
-        guide = extract_queried_guide(self._read_json(response_path))
-        catalogs = self._load_catalogs()
-        champions = catalogs["champions"]
-        items = catalogs["items"]
-        augments = catalogs["augments"]
-
-        final_units = self._unit_cards(
-            guide.get("finalComp", []),
-            champions=champions,
-            items=items,
-        )
-        early_units = self._unit_cards(
-            guide.get("earlyComp", []),
-            champions=champions,
-            items=items,
-        )
-
-        item_recommendations: list[dict[str, Any]] = []
-        component_counts: dict[str, int] = {}
-        for recommendation in guide.get("carousel", []):
-            item_api_name = str(recommendation["apiName"])
-            item = self._require(items, item_api_name, "item")
-            recipe_api_names = [
-                str(api_name) for api_name in (item.get("composition") or [])
-            ]
-            recipe = [
-                self._entity_card(
-                    self._require(items, api_name, "component"),
-                    "items",
-                    ("icon",),
-                )
-                for api_name in recipe_api_names
-            ]
-            item_recommendations.append(
-                {
-                    **self._entity_card(item, "items", ("icon",)),
-                    "components": recipe,
-                }
+        _index, entry = self._find_entry(source_id, snapshot)
+        if snapshot is None:
+            response_path = self.root / str(entry["response_file"])
+            guide = self._extract_indexed_guide(
+                self._read_json(response_path), source_id
             )
-
-            demanded_components = (
-                [item_api_name]
-                if item.get("type") == "components"
-                else recipe_api_names
-            )
-            for component_api_name in demanded_components:
-                self._require(items, component_api_name, "component")
-                component_counts[component_api_name] = (
-                    component_counts.get(component_api_name, 0) + 1
-                )
-
-        components = [
-            {
-                **self._entity_card(
-                    self._require(items, api_name, "component"),
-                    "items",
-                    ("icon",),
-                ),
-                "requiredCount": required_count,
-            }
-            for api_name, required_count in component_counts.items()
-        ]
-        augment_cards = [
-            {
-                **self._entity_card(
-                    self._require(augments, augment["apiName"], "augment"),
-                    "augments",
-                    ("icon",),
-                ),
-                "disabledAtSource": bool(augment.get("disabled", False)),
-            }
-            for augment in guide.get("augments", [])
-        ]
-
-        set_number = int(guide["set"])
+            catalogs = self.load_catalogs()
+        else:
+            guide = snapshot.guides[source_id]
+            catalogs = snapshot.catalogs
+        workspace = build_workspace(guide, entry, catalogs)
         configuration = self._load_or_default_configuration(
             source_id=source_id,
-            set_number=set_number,
-            unit_api_names=list(dict.fromkeys(unit["apiName"] for unit in early_units)),
-            component_api_names=list(component_counts),
-            augment_api_names=[augment["apiName"] for augment in augment_cards],
+            set_number=workspace["source"]["set"],
+            unit_api_names=list(
+                dict.fromkeys(u["apiName"] for u in workspace["earlyUnits"])
+            ),
+            component_api_names=[c["apiName"] for c in workspace["components"]],
+            augment_api_names=[a["apiName"] for a in workspace["augments"]],
             reconcile=reconcile_configuration,
         )
-        main_champion_api_name = (guide.get("mainChampion") or {}).get("apiName")
-        main_champion = (
-            self._entity_card(
-                self._require(champions, main_champion_api_name, "main champion"),
-                "champions",
-                ("championSquareIcon", "championIcon"),
+        if reconcile_configuration:
+            strategy, retired = reconcile_strategy(configuration, catalogs)
+            configuration = configuration.model_copy(
+                update={
+                    "strategy": strategy,
+                    "retired_strategy_rules": [
+                        *configuration.retired_strategy_rules,
+                        *retired,
+                    ],
+                    "status": "draft" if retired else configuration.status,
+                }
             )
-            if main_champion_api_name
-            else None
+        workspace["configuration"] = configuration.model_dump(
+            mode="json", by_alias=True
         )
-
-        return {
-            "source": {
-                "sourceId": source_id,
-                "title": guide.get("title") or entry["visible_name"],
-                "metaTitle": guide.get("metaTitle"),
-                "slug": guide["compSlug"],
-                "set": set_number,
-                "tier": guide.get("tier"),
-                "style": guide.get("style"),
-                "difficulty": guide.get("difficulty"),
-                "updatedAt": guide.get("updated"),
-                "mainChampion": main_champion,
-                "augmentTip": guide.get("augmentsTip"),
-                "tips": guide.get("tips", []),
-            },
-            "strategyCatalog": {
-                "champions": [
-                    self._entity_card(c, "champions", ("championSquareIcon",))
-                    for c in champions.values()
-                    if c.get("set") == set_number and c.get("cost") in (1, 2, 3)
-                ],
-                "targets": [
-                    self._entity_card(c, "champions", ("championSquareIcon",))
-                    for c in champions.values()
-                    if c.get("set") == set_number
-                ],
-                "items": [
-                    self._entity_card(i, "items", ("icon",))
-                    for i in items.values()
-                    if i.get("set") == set_number and i.get("type") == "craftables"
-                ],
-            },
-            "finalUnits": final_units,
-            "earlyUnits": early_units,
-            "itemRecommendations": item_recommendations,
-            "components": components,
-            "augments": augment_cards,
-            "configuration": configuration.model_dump(mode="json", by_alias=True),
-        }
+        return workspace
 
     def save_configuration(
         self,
@@ -199,15 +114,21 @@ class ConfigurationRepository:
         configuration: CompositionConfiguration,
         *,
         reconcile_existing: bool = False,
+        snapshot: SourceSnapshot | None = None,
     ) -> CompositionConfiguration:
         workspace = self.get_workspace(
             source_id,
             reconcile_configuration=reconcile_existing,
+            snapshot=snapshot,
         )
-        from tft_spot.engine.compiler import validate_strategy
-
         try:
-            validate_strategy(configuration, self._load_catalogs())
+            catalogs = snapshot.catalogs if snapshot else self.load_catalogs()
+            validate_strategy(configuration, catalogs)
+            resolve_augment_decisions(
+                configuration.augments,
+                build_augment_aliases(catalogs["augments"]),
+                configuration.source_id,
+            )
         except ValueError as error:
             raise ConfiguratorDataError(str(error)) from error
         source = workspace["source"]
@@ -263,10 +184,11 @@ class ConfigurationRepository:
         return saved
 
     def bootstrap_ready_configurations(self) -> list[CompositionConfiguration]:
+        snapshot = self.load_snapshot()
         prepared: list[tuple[str, CompositionConfiguration]] = []
-        for composition in self.list_compositions():
+        for composition in self.list_compositions(snapshot):
             source_id = str(composition["sourceId"])
-            workspace = self.get_workspace(source_id)
+            workspace = self.get_workspace(source_id, snapshot=snapshot)
             current = CompositionConfiguration.model_validate(
                 workspace["configuration"]
             )
@@ -314,6 +236,7 @@ class ConfigurationRepository:
                             for decision in current.augments
                         ],
                         strategy=current.strategy,
+                        retired_strategy_rules=current.retired_strategy_rules,
                         notes=current.notes,
                         updated_at=current.updated_at,
                     ),
@@ -321,7 +244,7 @@ class ConfigurationRepository:
             )
 
         return [
-            self.save_configuration(source_id, configuration)
+            self.save_configuration(source_id, configuration, snapshot=snapshot)
             for source_id, configuration in prepared
         ]
 
@@ -329,6 +252,7 @@ class ConfigurationRepository:
         self,
         *,
         ready_source_ids: set[str],
+        snapshot: SourceSnapshot | None = None,
     ) -> list[CompositionConfiguration]:
         """Align curated decisions with refreshed raw guides.
 
@@ -336,12 +260,14 @@ class ConfigurationRepository:
         Obsolete decisions are dropped, newly discovered ones receive the normal
         defaults, and only new or materially changed files are written.
         """
+        snapshot = snapshot or self.load_snapshot()
         saved: list[CompositionConfiguration] = []
-        for composition in self.list_compositions():
+        for composition in self.list_compositions(snapshot):
             source_id = str(composition["sourceId"])
             workspace = self.get_workspace(
                 source_id,
                 reconcile_configuration=True,
+                snapshot=snapshot,
             )
             current = CompositionConfiguration.model_validate(
                 workspace["configuration"]
@@ -363,6 +289,7 @@ class ConfigurationRepository:
                     source_id,
                     desired,
                     reconcile_existing=True,
+                    snapshot=snapshot,
                 )
             )
         return saved
@@ -394,7 +321,10 @@ class ConfigurationRepository:
         for entry in index.get("compositions", []):
             try:
                 response_path = self.root / str(entry["response_file"])
-                guide = extract_queried_guide(self._read_json(response_path))
+                guide = self._extract_indexed_guide(
+                    self._read_json(response_path),
+                    str(entry["backend_id"]),
+                )
                 set_number = int(guide["set"])
             except (KeyError, TypeError, ValueError) as error:
                 raise ConfiguratorDataError(
@@ -413,42 +343,68 @@ class ConfigurationRepository:
             f"contain {len(guide_sets)} distinct set numbers"
         )
 
-    def _unit_cards(
-        self,
-        raw_units: list[dict[str, Any]],
-        *,
-        champions: dict[str, dict[str, Any]],
-        items: dict[str, dict[str, Any]],
-    ) -> list[dict[str, Any]]:
-        return [
-            {
-                **self._entity_card(
-                    self._require(champions, unit["apiName"], "champion"),
-                    "champions",
-                    ("championSquareIcon", "championIcon"),
-                ),
-                "boardIndex": unit.get("boardIndex"),
-                "stars": unit.get("stars"),
-                "items": [
-                    self._entity_card(
-                        self._require(items, item_api_name, "item"),
-                        "items",
-                        ("icon",),
-                    )
-                    for item_api_name in unit.get("items", [])
-                ],
-            }
-            for unit in raw_units
-        ]
+    @staticmethod
+    def _extract_indexed_guide(
+        payload: dict[str, Any],
+        source_id: str,
+    ) -> dict[str, Any]:
+        try:
+            guides = extract_guides(payload)
+        except TftAcademyDataError:
+            guides = []
+        for guide in guides:
+            if str(guide.get("id")) == source_id:
+                return guide
 
-    def _find_entry(self, source_id: str) -> tuple[dict[str, Any], dict[str, Any]]:
-        index = self._read_json(self.raw_dir / "compositions" / "index.json")
+        try:
+            guide = extract_queried_guide(payload)
+        except TftAcademyDataError as error:
+            raise ConfiguratorDataError(
+                f"Raw guide payload does not contain sourceId: {source_id}"
+            ) from error
+        if str(guide.get("id")) != source_id:
+            raise ConfiguratorDataError(
+                f"Raw guide payload does not contain sourceId: {source_id}"
+            )
+        return guide
+
+    def _find_entry(
+        self, source_id: str, snapshot: SourceSnapshot | None = None
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        index = (
+            snapshot.index
+            if snapshot
+            else self._read_json(self.raw_dir / "compositions" / "index.json")
+        )
         for entry in index["compositions"]:
             if str(entry["backend_id"]) == source_id:
                 return index, entry
         raise CompositionNotFoundError(f"Unknown TFT Academy composition: {source_id}")
 
-    def _load_catalogs(self) -> dict[str, dict[str, dict[str, Any]]]:
+    def load_snapshot(self) -> SourceSnapshot:
+        """Read each raw JSON once and decode each guide collection once per operation."""
+        index = self._read_json(self.raw_dir / "compositions" / "index.json")
+        catalogs = self.load_catalogs()
+        collections: dict[Path, dict[str, Any]] = {}
+        selected: dict[str, dict[str, Any]] = {}
+        for entry in index["compositions"]:
+            path = self.root / entry["response_file"]
+            source_id = str(entry["backend_id"])
+            if path not in collections:
+                payload = self._read_json(path)
+                try:
+                    guides = extract_guides(payload)
+                except TftAcademyDataError:
+                    guides = [extract_queried_guide(payload)]
+                collections[path] = {str(guide["id"]): guide for guide in guides}
+            if source_id not in collections[path]:
+                raise ConfiguratorDataError(
+                    f"Raw guide payload does not contain sourceId: {source_id}"
+                )
+            selected[source_id] = collections[path][source_id]
+        return SourceSnapshot(index=index, catalogs=catalogs, guides=selected)
+
+    def load_catalogs(self) -> dict[str, dict[str, dict[str, Any]]]:
         result: dict[str, dict[str, dict[str, Any]]] = {}
         for root_key, filename in (
             ("champions", "champions.json"),
@@ -533,6 +489,7 @@ class ConfigurationRepository:
                 for api_name in augment_api_names
             ],
             strategy=existing.strategy if existing else StrategySettings(),
+            retired_strategy_rules=existing.retired_strategy_rules if existing else [],
             notes=existing.notes if existing else "",
             updated_at=existing.updated_at if existing else None,
         )
@@ -556,39 +513,6 @@ class ConfigurationRepository:
         payload = configuration.model_dump(mode="json", by_alias=True)
         payload.pop("updatedAt", None)
         return payload
-
-    @staticmethod
-    def _entity_card(
-        entity: dict[str, Any],
-        category: str,
-        image_fields: tuple[str, ...],
-    ) -> dict[str, Any]:
-        filename = next(
-            (str(entity[field]) for field in image_fields if entity.get(field)),
-            None,
-        )
-        return {
-            "apiName": str(entity["apiName"]),
-            "name": str(entity.get("name") or entity["apiName"]),
-            "imageUrl": (
-                f"/game-assets/{category}/{quote(filename)}" if filename else None
-            ),
-            "type": entity.get("type"),
-            **({"role": entity["role"]} if "role" in entity else {}),
-        }
-
-    @staticmethod
-    def _require(
-        catalog: dict[str, dict[str, Any]],
-        api_name: str,
-        entity_type: str,
-    ) -> dict[str, Any]:
-        try:
-            return catalog[api_name]
-        except KeyError as error:
-            raise ConfiguratorDataError(
-                f"Unknown {entity_type} apiName: {api_name}"
-            ) from error
 
     @staticmethod
     def _validate_decisions(

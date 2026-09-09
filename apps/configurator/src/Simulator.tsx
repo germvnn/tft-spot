@@ -1,3 +1,4 @@
+import { readJson as api } from "./api";
 import StrategyEvidence, { type StrategyEvidenceData } from "./StrategyEvidence";
 import { useEffect, useState } from "react";
 import {
@@ -84,17 +85,7 @@ const verdicts = {
   too_high: "Za wysoko",
   unrealistic: "Nierealistyczny spot",
 };
-async function api<T>(url: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(url, init);
-  const body = await response.json();
-  if (!response.ok)
-    throw new Error(
-      typeof body.detail === "string"
-        ? body.detail
-        : "Nie udało się wykonać operacji.",
-    );
-  return body;
-}
+
 function json(method: string, body?: unknown): RequestInit {
   return {
     method,

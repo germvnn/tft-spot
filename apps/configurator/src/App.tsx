@@ -1,4 +1,3 @@
-import StrategyEditor, { type Strategy } from "./StrategyEditor"
 import {
   Boxes,
   Check,
@@ -12,626 +11,21 @@ import {
   RotateCcw,
   Save,
   Search,
-  SlidersHorizontal,
   Sparkles,
   Sword,
   UsersRound,
 } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
-
-const emptyStrategy: Strategy = { openers: [], itemOverrides: [], augmentConditions: [] };
-
-type Priority =
-  | 'unset'
-  | 'essential'
-  | 'high'
-  | 'medium'
-  | 'low'
-  | 'avoid'
-type ConfigurationStatus = 'draft' | 'ready'
-
-type EntityCard = {
-  apiName: string
-  name: string
-  imageUrl: string | null
-  type?: string | null
-}
-
-type UnitCard = EntityCard & {
-  boardIndex: number | null
-  stars: number | null
-  items: EntityCard[]
-}
-
-type ComponentCard = EntityCard & {
-  requiredCount: number
-}
-
-type ItemRecommendation = EntityCard & {
-  components: EntityCard[]
-}
-
-type AugmentCard = EntityCard & {
-  disabledAtSource: boolean
-}
-
-type PriorityDecision = {
-  apiName: string
-  priority: Priority
-}
-
-type UnitPriorityDecision = PriorityDecision & { core: boolean }
-
-type Configuration = {
-  schemaVersion: 1
-  sourceId: string
-  setNumber: number
-  status: ConfigurationStatus
-  weights: {
-    units: number
-    components: number
-    augments: number
-  }
-  units: UnitPriorityDecision[]
-  components: PriorityDecision[]
-  augments: PriorityDecision[]
-  strategy?: Strategy
-  notes: string
-  updatedAt: string | null
-}
-
-type CompositionSummary = {
-  sourceId: string
-  title: string
-  slug: string
-  position: number
-  configured: boolean
-}
-
-type SourceRefreshResult = {
-  setNumber: number
-  compositionCount: number
-  addedSourceIds: string[]
-  removedSourceIds: string[]
-  reconciledSourceIds: string[]
-  removedConfigurationSourceIds: string[]
-}
-
-type CompositionWorkspace = {
-  source: {
-    sourceId: string
-    title: string
-    metaTitle: string | null
-    slug: string
-    set: number
-    tier: string | null
-    style: string | null
-    difficulty: string | null
-    updatedAt: string | null
-    mainChampion: EntityCard | null
-    augmentTip: string | null
-    tips: { stage: string; tip: string }[]
-  }
-  strategyCatalog?: { champions: EntityCard[]; targets: EntityCard[]; items: EntityCard[] }
-  finalUnits: UnitCard[]
-  earlyUnits: UnitCard[]
-  itemRecommendations: ItemRecommendation[]
-  components: ComponentCard[]
-  augments: AugmentCard[]
-  configuration: Configuration
-}
-
-const priorityOptions: { value: Priority; label: string }[] = [
-  { value: 'unset', label: 'Nieustawiony' },
-  { value: 'essential', label: 'Core' },
-  { value: 'high', label: 'Wysoki' },
-  { value: 'medium', label: 'Średni' },
-  { value: 'low', label: 'Niski' },
-  { value: 'avoid', label: 'Odrzuć' },
-]
-
-function messageFromResponse(payload: unknown): string {
-  if (
-    typeof payload === 'object' &&
-    payload !== null &&
-    'detail' in payload
-  ) {
-    const detail = payload.detail
-    if (typeof detail === 'string') return detail
-    if (Array.isArray(detail)) {
-      return detail
-        .map((entry) =>
-          typeof entry === 'object' &&
-          entry !== null &&
-          'msg' in entry
-            ? String(entry.msg)
-            : 'Nieprawidłowa wartość',
-        )
-        .join(', ')
-    }
-  }
-  return 'Wystąpił nieoczekiwany błąd'
-}
-
-async function readJson<T>(url: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(url, init)
-  const payload = (await response.json()) as unknown
-  if (!response.ok) throw new Error(messageFromResponse(payload))
-  return payload as T
-}
-
-async function loadWorkspace(url: string, init?: RequestInit): Promise<CompositionWorkspace> {
-  const workspace = await readJson<CompositionWorkspace>(url, init)
-  return { ...workspace, configuration: withUnitDefaults(workspace.configuration, workspace.earlyUnits) }
-}
-
-function withUnitDefaults(configuration: Configuration, earlyUnits: UnitCard[]): Configuration {
-  return {
-    ...configuration,
-    units: (configuration.units ?? Array.from(new Set(earlyUnits.map((unit) => unit.apiName)), (apiName) => ({ apiName, priority: 'medium' as const, core: false }))).map((unit) => ({ ...unit, core: unit.core ?? false })),
-  }
-}
-
-function EntityImage({
-  entity,
-  size = 'md',
-}: {
-  entity: EntityCard
-  size?: 'sm' | 'md' | 'lg'
-}) {
-  const sizing =
-    size === 'lg'
-      ? 'h-20 w-20'
-      : size === 'sm'
-        ? 'h-8 w-8'
-        : 'h-12 w-12'
-
-  return (
-    <div
-      className={`${sizing} entity-frame relative shrink-0 overflow-hidden border border-[#66552f] bg-[#111722]`}
-    >
-      {entity.imageUrl ? (
-        <img
-          src={entity.imageUrl}
-          alt=""
-          className="h-full w-full object-cover"
-          loading="lazy"
-          onError={(event) => {
-            event.currentTarget.style.display = 'none'
-          }}
-        />
-      ) : null}
-      <span className="absolute inset-0 -z-10 grid place-items-center text-xs font-black text-[#bfa65d]">
-        {entity.name.slice(0, 2).toUpperCase()}
-      </span>
-    </div>
-  )
-}
-
-function PrioritySelect({
-  value,
-  onChange,
-  label,
-}: {
-  value: Priority
-  onChange: (value: Priority) => void
-  label: string
-}) {
-  return (
-    <label className="relative block min-w-32">
-      <span className="sr-only">{label}</span>
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value as Priority)}
-        className="field-control h-9 w-full appearance-none rounded-sm px-3 pr-8 text-xs font-bold"
-      >
-        {priorityOptions.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-      <ChevronRight
-        aria-hidden="true"
-        className="pointer-events-none absolute right-2 top-2.5 h-4 w-4 rotate-90 text-[#778398]"
-      />
-    </label>
-  )
-}
-
-function SectionHeading({
-  icon,
-  eyebrow,
-  title,
-  count,
-}: {
-  icon: React.ReactNode
-  eyebrow: string
-  title: string
-  count: number
-}) {
-  return (
-    <div className="mb-4 flex items-end justify-between gap-4">
-      <div className="flex items-center gap-3">
-        <div className="grid h-9 w-9 place-items-center border border-[#293445] bg-[#111721] text-[#d7b75f]">
-          {icon}
-        </div>
-        <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.23em] text-[#667287]">
-            {eyebrow}
-          </p>
-          <h2 className="font-display text-lg font-bold tracking-wide text-[#edf2f7]">
-            {title}
-          </h2>
-        </div>
-      </div>
-      <span className="rounded-sm border border-[#273243] bg-[#0d121b] px-2 py-1 font-mono text-[10px] text-[#7f8b9d]">
-        {String(count).padStart(2, '0')}
-      </span>
-    </div>
-  )
-}
-
-function WeightControl({
-  label,
-  value,
-  color,
-  onChange,
-}: {
-  label: string
-  value: number
-  color: string
-  onChange: (value: number) => void
-}) {
-  return (
-    <label className="block">
-      <span className="mb-2 flex items-baseline justify-between text-xs font-bold text-[#aeb8c7]">
-        {label}
-        <span className="font-mono text-sm text-[#f2d37c]">{value}%</span>
-      </span>
-      <input
-        type="range"
-        min="0"
-        max="100"
-        value={value}
-        onChange={(event) => onChange(Number(event.target.value))}
-        className="weight-range w-full"
-        style={{ '--track-color': color } as React.CSSProperties}
-      />
-    </label>
-  )
-}
+import { useEffect, useRef } from 'react'
+import { EntityImage, PrioritySelect, SectionHeading } from './ConfiguratorControls'
+import { ConfigurationSettings } from './ConfigurationSettings'
+import { useConfigurationEditor } from './useConfigurationEditor'
 
 function App({ active = true }: { active?: boolean }) {
-  const [compositions, setCompositions] = useState<CompositionSummary[]>([])
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [workspace, setWorkspace] = useState<CompositionWorkspace | null>(null)
-  const [configuration, setConfiguration] = useState<Configuration | null>(null)
-  const [baseline, setBaseline] = useState<Configuration | null>(null)
-  const [query, setQuery] = useState('')
-  const [loadingList, setLoadingList] = useState(true)
-  const [loadingWorkspace, setLoadingWorkspace] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [bootstrapping, setBootstrapping] = useState(false)
-  const [refreshingSource, setRefreshingSource] = useState(false)
-  const [notice, setNotice] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null)
-
-  useEffect(() => {
-    const controller = new AbortController()
-    readJson<{ compositions: CompositionSummary[] }>('/api/compositions', {
-      signal: controller.signal,
-    })
-      .then(({ compositions: entries }) => {
-        setCompositions(entries)
-        setSelectedId((current) => current ?? entries[0]?.sourceId ?? null)
-      })
-      .catch((error: unknown) => {
-        if ((error as Error).name !== 'AbortError') {
-          setNotice({ tone: 'error', text: (error as Error).message })
-        }
-      })
-      .finally(() => setLoadingList(false))
-    return () => controller.abort()
-  }, [])
-
-  useEffect(() => {
-    if (!selectedId) return
-    const controller = new AbortController()
-    loadWorkspace(`/api/compositions/${selectedId}`, {
-      signal: controller.signal,
-    })
-      .then((nextWorkspace) => {
-        setWorkspace(nextWorkspace)
-        setConfiguration(nextWorkspace.configuration)
-        setBaseline(nextWorkspace.configuration)
-      })
-      .catch((error: unknown) => {
-        if ((error as Error).name !== 'AbortError') {
-          setNotice({ tone: 'error', text: (error as Error).message })
-        }
-      })
-      .finally(() => setLoadingWorkspace(false))
-    return () => controller.abort()
-  }, [selectedId])
-
-  const dirty =
-    configuration !== null &&
-    baseline !== null &&
-    JSON.stringify(configuration) !== JSON.stringify(baseline)
-
-  const configuredCount = useMemo(
-    () => compositions.filter((composition) => composition.configured).length,
-    [compositions],
-  )
-
-  const filteredCompositions = useMemo(() => {
-    const needle = query.trim().toLocaleLowerCase('pl')
-    if (!needle) return compositions
-    return compositions.filter((composition) =>
-      composition.title.toLocaleLowerCase('pl').includes(needle),
-    )
-  }, [compositions, query])
-
-  const progress = useMemo(() => {
-    if (!configuration) return { done: 0, total: 0, percent: 0 }
-    const priorities = [
-      ...configuration.components,
-      ...configuration.augments,
-    ]
-    const done = priorities.filter(
-      (decision) => decision.priority !== 'unset',
-    ).length
-    const total = priorities.length
-    return {
-      done,
-      total,
-      percent: total ? Math.round((done / total) * 100) : 100,
-    }
-  }, [configuration])
-
-  const weightTotal = configuration
-    ? Object.values(configuration.weights).reduce(
-        (sum, value) => sum + value,
-        0,
-      )
-    : 0
-
-  const selectComposition = (sourceId: string) => {
-    if (
-      dirty &&
-      !window.confirm('Masz niezapisane zmiany. Przejść dalej i je odrzucić?')
-    ) {
-      return
-    }
-    setLoadingWorkspace(true)
-    setSelectedId(sourceId)
-  }
-
-  const changeComponentPriority = (
-    apiName: string,
-    priority: Priority,
-  ) => {
-    setConfiguration((current) =>
-      current
-        ? {
-            ...current,
-            components: current.components.map((decision) =>
-              decision.apiName === apiName
-                ? { ...decision, priority }
-                : decision,
-            ),
-          }
-        : current,
-    )
-  }
-
-  const changeUnitCore = (apiName: string, core: boolean) => {
-    setConfiguration((current) => current ? {
-      ...current,
-      units: current.units.map((decision) => decision.apiName === apiName ? { ...decision, core } : decision),
-    } : current)
-  }
-
-  const changeAugment = (apiName: string, priority: Priority) => {
-    if (priority === 'essential' && configuration?.augments.some((decision) => decision.apiName !== apiName && decision.priority === 'essential')) {
-      setNotice({ tone: 'error', text: 'Kompozycja moze miec tylko jeden augment Core.' })
-      return
-    }
-    setConfiguration((current) =>
-      current
-        ? {
-            ...current,
-            augments: current.augments.map((decision) =>
-              decision.apiName === apiName
-                ? { ...decision, priority }
-                : decision,
-            ),
-          }
-        : current,
-    )
-  }
-
-  const changeWeight = (
-    key: keyof Configuration['weights'],
-    value: number,
-  ) => {
-    setConfiguration((current) =>
-      current
-        ? {
-            ...current,
-            weights: { ...current.weights, [key]: value },
-          }
-        : current,
-    )
-  }
-
-  const save = async () => {
-    if (!configuration || !selectedId) {
-      return {
-        saved: false as const,
-        error: 'Nie wybrano kompozycji do zapisania.',
-      }
-    }
-    if (weightTotal !== 100) {
-      const error = 'Wagi muszą sumować się dokładnie do 100%.'
-      setNotice({
-        tone: 'error',
-        text: error,
-      })
-      return { saved: false as const, error }
-    }
-
-    setSaving(true)
-    setNotice(null)
-    try {
-      const result = await readJson<{ configuration: Configuration }>(
-        `/api/compositions/${selectedId}/configuration`,
-        {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(configuration),
-        },
-      )
-      const saved = withUnitDefaults(result.configuration, workspace?.earlyUnits ?? [])
-      setConfiguration(saved)
-      setBaseline(saved)
-      setCompositions((current) =>
-        current.map((composition) =>
-          composition.sourceId === selectedId
-            ? { ...composition, configured: true }
-            : composition,
-        ),
-      )
-      setNotice({
-        tone: 'ok',
-        text: 'Zapisano konfigurację w data/curated.',
-      })
-      return {
-        saved: true as const,
-        sourceId: selectedId,
-        status: result.configuration.status,
-      }
-    } catch (error) {
-      const message = (error as Error).message
-      setNotice({ tone: 'error', text: message })
-      return { saved: false as const, error: message }
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const bootstrapAll = async () => {
-    if (dirty) {
-      setNotice({
-        tone: 'error',
-        text: 'Najpierw zapisz albo cofnij zmiany bieżącej kompozycji.',
-      })
-      return
-    }
-
-    const confirmed = window.confirm(
-      `Zapisać wszystkie ${compositions.length} kompozycji jako ready w data/curated?\n\nIstniejące ręczne priorytety zostaną zachowane.`,
-    )
-    if (!confirmed) return
-
-    setBootstrapping(true)
-    setNotice(null)
-    try {
-      const result = await readJson<{
-        saved: number
-        sourceIds: string[]
-      }>('/api/compositions/bootstrap-ready', { method: 'POST' })
-
-      setCompositions((current) =>
-        current.map((composition) =>
-          result.sourceIds.includes(composition.sourceId)
-            ? { ...composition, configured: true }
-            : composition,
-        ),
-      )
-
-      if (selectedId && result.sourceIds.includes(selectedId)) {
-        const nextWorkspace = await loadWorkspace(
-          `/api/compositions/${selectedId}`,
-        )
-        setWorkspace(nextWorkspace)
-        setConfiguration(nextWorkspace.configuration)
-        setBaseline(nextWorkspace.configuration)
-      }
-
-      setNotice({
-        tone: 'ok',
-        text: `Zapisano ${result.saved} kompozycji jako gotowe dla silnika.`,
-      })
-    } catch (error) {
-      setNotice({ tone: 'error', text: (error as Error).message })
-    } finally {
-      setBootstrapping(false)
-    }
-  }
-
-  const refreshSource = async () => {
-    if (dirty) {
-      setNotice({
-        tone: 'error',
-        text: 'Najpierw zapisz albo cofnij zmiany bieżącej kompozycji.',
-      })
-      return
-    }
-
-    const confirmed = window.confirm(
-      'Pobrać pełny snapshot TFT Academy i zsynchronizować curated data?\n\nNowe kompozycje zostaną dodane jako ready. Konfiguracje kompozycji usuniętych ze źródła zostaną skasowane.',
-    )
-    if (!confirmed) return
-
-    setRefreshingSource(true)
-    setLoadingList(true)
-    setNotice(null)
-    try {
-      const result = await readJson<SourceRefreshResult>(
-        '/api/compositions/refresh-source',
-        { method: 'POST' },
-      )
-      const { compositions: entries } = await readJson<{
-        compositions: CompositionSummary[]
-      }>('/api/compositions')
-      const nextSelectedId =
-        selectedId && entries.some((entry) => entry.sourceId === selectedId)
-          ? selectedId
-          : entries[0]?.sourceId ?? null
-
-      setCompositions(entries)
-      setSelectedId(nextSelectedId)
-      if (nextSelectedId) {
-        setLoadingWorkspace(true)
-        const nextWorkspace = await loadWorkspace(
-          `/api/compositions/${nextSelectedId}`,
-        )
-        setWorkspace(nextWorkspace)
-        setConfiguration(nextWorkspace.configuration)
-        setBaseline(nextWorkspace.configuration)
-      } else {
-        setWorkspace(null)
-        setConfiguration(null)
-        setBaseline(null)
-      }
-
-      setNotice({
-        tone: 'ok',
-        text:
-          `Odświeżono ${result.compositionCount} kompozycji · ` +
-          `nowe: ${result.addedSourceIds.length} · ` +
-          `usunięte: ${result.removedSourceIds.length} · ` +
-          `zapisane konfiguracje: ${result.reconciledSourceIds.length}.`,
-      })
-    } catch (error) {
-      setNotice({ tone: 'error', text: (error as Error).message })
-    } finally {
-      setRefreshingSource(false)
-      setLoadingList(false)
-      setLoadingWorkspace(false)
-    }
-  }
+  const { compositions, selectedId, workspace, configuration, setConfiguration, baseline,
+    query, setQuery, loadingList, loadingWorkspace, saving, bootstrapping, refreshingSource,
+    notice, dirty, configuredCount, filteredCompositions, progress, weightTotal,
+    selectComposition, changeComponentPriority, changeUnitCore, changeAugment, changeWeight,
+    save, bootstrapAll, refreshSource } = useConfigurationEditor()
 
   const saveToolRef = useRef<typeof save | null>(null)
   useEffect(() => {
@@ -823,6 +217,7 @@ function App({ active = true }: { active?: boolean }) {
                   <button
                     key={composition.sourceId}
                     type="button"
+                    disabled={saving || bootstrapping || refreshingSource}
                     onClick={() => selectComposition(composition.sourceId)}
                     className={`group mb-1 flex w-full items-center gap-3 border px-3 py-2.5 text-left transition ${
                       active
@@ -844,7 +239,7 @@ function App({ active = true }: { active?: boolean }) {
                         {composition.title}
                       </span>
                       <span className="mt-0.5 block truncate font-mono text-[9px] uppercase text-[#536075]">
-                        {composition.slug.replace('set-18-', '')}
+                        {composition.slug?.replace('set-18-', '') || 'brak sluga'}
                       </span>
                     </span>
                     {composition.configured ? (
@@ -859,7 +254,7 @@ function App({ active = true }: { active?: boolean }) {
           </nav>
         </aside>
 
-        <section className="min-w-0">
+        <fieldset disabled={bootstrapping || refreshingSource} className="min-w-0 border-0 p-0 m-0">
           {loadingWorkspace || !workspace || !configuration ? (
             <div className="grid min-h-[calc(100vh-4rem)] place-items-center">
               <div className="text-center">
@@ -895,14 +290,18 @@ function App({ active = true }: { active?: boolean }) {
                       <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#69768a]">
                         <span>Set {workspace.source.set}</span>
                         <span>Source {workspace.source.sourceId}</span>
-                        <a
-                          href={`https://tftacademy.com/tierlist/comps/${workspace.source.slug}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1 text-[#aa9254] hover:text-[#e3c46f]"
-                        >
-                          TFT Academy <ExternalLink className="h-3 w-3" />
-                        </a>
+                        {workspace.source.slug ? (
+                          <a
+                            href={`https://tftacademy.com/tierlist/comps/${workspace.source.slug}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 text-[#aa9254] hover:text-[#e3c46f]"
+                          >
+                            TFT Academy <ExternalLink className="h-3 w-3" />
+                          </a>
+                        ) : (
+                          <span>Brak linku źródłowego</span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1189,134 +588,18 @@ function App({ active = true }: { active?: boolean }) {
                     </div>
                   </section>
                 </div>
-                <aside className="space-y-5">
-                  {workspace.strategyCatalog && <StrategyEditor value={configuration.strategy ?? emptyStrategy} catalog={workspace.strategyCatalog} augments={workspace.augments} onChange={strategy => setConfiguration(current => current ? {...current, strategy} : current)} />}
-                  <section className="panel-cut border border-[#343527] bg-[#12140f] p-5">
-                    <SectionHeading
-                      icon={<SlidersHorizontal className="h-4 w-4" />}
-                      eyebrow="Engine mix"
-                      title="Wagi sygnałów"
-                      count={3}
-                    />
-                    <div className="space-y-5">
-                      <WeightControl
-                        label="Early units"
-                        value={configuration.weights.units}
-                        color="#65a8cf"
-                        onChange={(value) => changeWeight('units', value)}
-                      />
-                      <WeightControl
-                        label="Komponenty"
-                        value={configuration.weights.components}
-                        color="#d2ae51"
-                        onChange={(value) => changeWeight('components', value)}
-                      />
-                      <WeightControl
-                        label="Augmenty"
-                        value={configuration.weights.augments}
-                        color="#a27bd6"
-                        onChange={(value) => changeWeight('augments', value)}
-                      />
-                    </div>
-                    <div
-                      className={`mt-5 flex items-center justify-between border-t pt-4 ${
-                        weightTotal === 100
-                          ? 'border-[#303526] text-[#6fbe98]'
-                          : 'border-[#513332] text-[#e18578]'
-                      }`}
-                    >
-                      <span className="text-[10px] font-black uppercase tracking-[0.17em]">
-                        Suma wag
-                      </span>
-                      <span className="font-mono text-lg font-bold">
-                        {weightTotal}%
-                      </span>
-                    </div>
-                  </section>
-
-                  <section className="border border-[#252f3e] bg-[#0e141d] p-5">
-                    <p className="mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#75643a]">
-                      Notatka z Academy
-                    </p>
-                    <p className="text-xs leading-5 text-[#8f9bad]">
-                      {workspace.source.augmentTip ||
-                        'Brak dodatkowej notatki dla tej kompozycji.'}
-                    </p>
-                  </section>
-
-                  <section className="border border-[#252f3e] bg-[#0e141d] p-5">
-                    <div className="mb-4 flex items-center justify-between">
-                      <div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#667287]">
-                          Stan eksportu
-                        </p>
-                        <h2 className="font-display text-base font-bold text-[#edf1f6]">
-                          Gotowość
-                        </h2>
-                      </div>
-                      <span className="font-mono text-xs text-[#d3b45e]">
-                        {progress.percent}%
-                      </span>
-                    </div>
-                    <div className="mb-4 h-1.5 overflow-hidden bg-[#1b2330]">
-                      <div
-                        className="h-full bg-[#d0ac51] transition-all"
-                        style={{ width: `${progress.percent}%` }}
-                      />
-                    </div>
-                    <label className="flex cursor-pointer items-start gap-3 border border-[#273141] bg-[#0b1018] p-3">
-                      <input
-                        type="checkbox"
-                        checked={configuration.status === 'ready'}
-                        disabled={progress.percent !== 100}
-                        onChange={(event) =>
-                          setConfiguration((current) =>
-                            current
-                              ? {
-                                  ...current,
-                                  status: event.target.checked
-                                    ? 'ready'
-                                    : 'draft',
-                                }
-                              : current,
-                          )
-                        }
-                        className="mt-0.5 h-4 w-4 accent-[#d2ae51]"
-                      />
-                      <span>
-                        <span className="block text-xs font-black text-[#dbe2eb]">
-                          Gotowa dla silnika
-                        </span>
-                        <span className="mt-1 block text-[10px] leading-4 text-[#687589]">
-                          Dostępne po ustawieniu wszystkich priorytetów.
-                        </span>
-                      </span>
-                    </label>
-                  </section>
-
-                  <section className="border border-[#252f3e] bg-[#0e141d] p-5">
-                    <p className="mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#667287]">
-                      Notatki własne
-                    </p>
-                    <textarea
-                      value={configuration.notes}
-                      onChange={(event) =>
-                        setConfiguration((current) =>
-                          current
-                            ? { ...current, notes: event.target.value }
-                            : current,
-                        )
-                      }
-                      rows={5}
-                      placeholder="Edge case’y, warunki wejścia, flex…"
-                      className="field-control w-full resize-y rounded-sm p-3 text-xs leading-5 outline-none"
-                    />
-                  </section>
-                </aside>
+                <ConfigurationSettings
+                  configuration={configuration}
+                  workspace={workspace}
+                  setConfiguration={setConfiguration}
+                  progress={progress}
+                  weightTotal={weightTotal}
+                  changeWeight={changeWeight}
+                />
               </div>
             </>
           )}
-        </section>
+        </fieldset>
       </main>
 
       {notice ? (

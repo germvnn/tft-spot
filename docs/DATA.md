@@ -3,8 +3,9 @@
 ## Snapshot
 
 Set 18 raw files are stored directly under `data/raw/tft_academy`: comps.html,
-augments.json, traits.json, champions.json, items.json, and manifest.json. Per-composition
-responses and their index are stored under `data/raw/tft_academy/compositions`.
+augments.json, traits.json, champions.json, items.json, and manifest.json. The raw
+SvelteKit guide collection is stored unchanged as `compositions/guides.json`; its
+derived index is stored alongside it.
 
 UI assets are stored separately under `data/assets`. Their manifest preserves
 the owning entity source id and apiName, source field and URL, HTTP metadata, byte
@@ -13,9 +14,13 @@ TFT Academy file URLs use collectionId, record id, and the source filename:
 https://api.tftacademy.com/api/files/{collectionId}/{id}/{filename}.
 
 The complete snapshot is reproducible with
-`python scripts/download_tft_academy.py`. The downloader discovers visible
-composition routes from the listing HTML, stores each route's SvelteKit data
-response, downloads entity resources and UI assets, and writes provenance manifests.
+`python scripts/download_tft_academy.py`. The downloader fetches
+`/tierlist/comps/__data.json` once and indexes every guide whose explicit `set`
+matches the requested set, in source array order. This includes sidebar variants,
+non-public guides and tier-X entries. Each index entry uses `guide.id` as its
+sourceId and may share or omit `compSlug`; slugs are not identity. Entity resources
+and UI assets are downloaded separately and provenance manifests include the
+unchanged guide payload.
 
 Configurator source refreshes are staged under a temporary project directory.
 The staged raw snapshot is parsed and all composition references are resolved
@@ -23,12 +28,16 @@ before raw data, assets, and the active set's curated composition directory are
 swapped into place. Existing decisions are retained by apiName, source order is
 rebuilt from the new guide, new decisions receive explicit defaults, and new
 compositions become ready. Curated files are deleted only for sourceIds present
-in the previous index and absent from the refreshed index.
+in the previous index and absent from the refreshed complete guide collection.
 Legacy composition indexes may omit their top-level set field. Refresh resolves
 that compatibility case from the explicit guide.set values and requires every
 guide to agree; it never infers a set number from route slugs.
 
-Compositions come from the SvelteKit hydration payload in GET https://tftacademy.com/tierlist/comps, observed at data[2].data.guides. The current snapshot has 48 guides and 48 unique guide.id values but 47 unique compSlug values. Use guide.id as sourceId.
+Compositions come from the SvelteKit hydration payload in GET
+https://tftacademy.com/tierlist/comps/__data.json, observed in a decoded `guides`
+node. On 2026-09-09 the Set 18 response had 53 guides, 53 unique `guide.id` values
+and 52 unique `compSlug` values: 35 guides were public and 18 non-public. Two
+guides had an empty slug. Use `guide.id` as sourceId.
 
 Counts: 260 augments, 36 traits, 72 champions, 139 items. Seven champions cost 0 and must remain.
 
@@ -104,6 +113,22 @@ exceptions override source early/final assigned items, which override role
 priors. Carousel order is never used to derive these affinities. Raw files and
 existing curated composition files are not migrated by this change.
 
-The local composition index used for the v3 audit contains 24 entries (all ready);
-this differs from the earlier 48-guide listing snapshot described above. The
-benchmark reports actual local coverage; it does not silently equate both sets.
+The local composition index used for the v3 audit contained 24 ready entries.
+That was a historical audit input and is smaller than the complete current guide
+collection. The benchmark reports actual local coverage; it does not silently
+equate the two datasets.
+
+
+## Curated rule retirement during refresh
+
+Configurations may include retiredStrategyRules (default empty). Each archived
+entry contains kind, the original rule in camelCase, and a validation reason.
+Refresh archives invalid openers, item overrides and augment conditions instead
+of discarding manual annotations or rejecting the entire snapshot. An opener
+with an invalid unit is archived as a whole so refresh cannot silently redefine
+its composition. Affected configurations become draft; valid rules and previous
+archives are preserved. This is curated metadata and does not change raw records.
+
+Ranking and simulation now load the shared guide payload once per operation.
+The returned workspace and scoring inputs keep source order and existing
+transformations; no normalized snapshot or new scoring semantics are introduced.

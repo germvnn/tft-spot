@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "sourceId": "0r6d7771fy8zjze",
+  "setNumber": 18,
+  "status": "ready",
+  "weights": {
+    "units": 40,
+    "components": 30,
+    "augments": 30
+  },
+  "units": [
+    {
+      "apiName": "DA_Cinderling18",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_18_Sentry",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_Scuttlecrab18",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_18_Yorick",
+      "priority": "medium",
+      "core": false
+    }
+  ],
+  "components": [
+    {
+      "apiName": "DA_Component_BFSword",
+      "priority": "essential"
+    },
+    {
+      "apiName": "DA_Component_SparringGloves",
+      "priority": "essential"
+    },
+    {
+      "apiName": "DA_Component_GiantsBelt",
+      "priority": "essential"
+    }
+  ],
+  "augments": [
+    {
+      "apiName": "DA_18_RiftbeastTraitAugment",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_18_RiftbeastTraitAugmentStampede",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_Coronation",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_LevelUp",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_LateGameSpecialist",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_Swordsmith",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_ExplosiveGrowthPlus",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_CursedCrown",
+      "priority": "medium"
+    }
+  ],
+  "strategy": {
+    "openers": [],
+    "itemOverrides": [],
+    "augmentConditions": []
+  },
+  "notes": "",
+  "updatedAt": "2026-09-09T10:57:15.593504Z"
+}

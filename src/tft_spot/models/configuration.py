@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -90,6 +90,12 @@ class StrategySettings(ApiModel):
         return self
 
 
+class RetiredStrategyRule(ApiModel):
+    kind: Literal["openers", "item_overrides", "augment_conditions"]
+    rule: dict[str, Any]
+    reason: str
+
+
 class CompositionConfiguration(ApiModel):
     schema_version: Literal[1] = 1
     source_id: str = Field(min_length=1)
@@ -100,6 +106,7 @@ class CompositionConfiguration(ApiModel):
     components: list[PriorityDecision]
     augments: list[PriorityDecision]
     strategy: StrategySettings = Field(default_factory=StrategySettings)
+    retired_strategy_rules: list[RetiredStrategyRule] = Field(default_factory=list)
     notes: str = ""
     updated_at: datetime | None = None
 

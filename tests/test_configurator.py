@@ -165,6 +165,43 @@ def test_snapshot_set_number_falls_back_to_raw_guides_for_legacy_index(
     assert ConfigurationRepository(tmp_path).snapshot_set_number() == 18
 
 
+def test_repository_selects_variant_from_shared_guide_payload(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    primary = build_source_fixture(tmp_path)
+    variant = {
+        **primary,
+        "id": "variant-id",
+        "title": "Example variant",
+        "compSlug": "set-18-example-variant",
+    }
+    raw = tmp_path / "data" / "raw" / "tft_academy"
+    index_path = raw / "compositions" / "index.json"
+    index = json.loads(index_path.read_text(encoding="utf-8"))
+    index["compositions"].append(
+        {
+            "backend_id": "variant-id",
+            "visible_name": "Example variant",
+            "slug": "set-18-example-variant",
+            "response_file": "data/raw/tft_academy/compositions/guides.json",
+        }
+    )
+    write_json(index_path, index)
+    write_json(raw / "compositions" / "guides.json", {})
+    monkeypatch.setattr(
+        repository_module,
+        "extract_guides",
+        lambda _payload: [primary, variant],
+    )
+
+    workspace = ConfigurationRepository(tmp_path).get_workspace("variant-id")
+
+    assert workspace["source"]["sourceId"] == "variant-id"
+    assert workspace["source"]["title"] == "Example variant"
+    assert workspace["source"]["slug"] == "set-18-example-variant"
+
+
 def test_scoring_weights_must_add_up_to_one_hundred() -> None:
     assert ScoringWeights().units == 40
 

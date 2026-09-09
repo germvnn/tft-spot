@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "sourceId": "2cpmv9lish14x6n",
+  "setNumber": 18,
+  "status": "ready",
+  "weights": {
+    "units": 40,
+    "components": 30,
+    "augments": 30
+  },
+  "units": [
+    {
+      "apiName": "DA_Cinderling18",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_Gromp18_AP",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_Scuttlecrab18",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_18_Yorick",
+      "priority": "medium",
+      "core": false
+    }
+  ],
+  "components": [
+    {
+      "apiName": "DA_Component_TearOfTheGoddess",
+      "priority": "essential"
+    },
+    {
+      "apiName": "DA_Component_BFSword",
+      "priority": "essential"
+    },
+    {
+      "apiName": "DA_Component_SparringGloves",
+      "priority": "essential"
+    },
+    {
+      "apiName": "DA_Component_ChainVest",
+      "priority": "essential"
+    },
+    {
+      "apiName": "DA_Component_NegatronCloak",
+      "priority": "essential"
+    }
+  ],
+  "augments": [
+    {
+      "apiName": "DA_18_PrimalAugment_Sivir",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_Swordsmith",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_SwordOverflow",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_CarveAPath",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_JeweledLotus_II",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_GildedSteel",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_BoosterPackPlusPlus",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_CyberneticImplants_Gold",
+      "priority": "medium"
+    }
+  ],
+  "strategy": {
+    "openers": [],
+    "itemOverrides": [],
+    "augmentConditions": []
+  },
+  "notes": "",
+  "updatedAt": "2026-09-09T10:57:15.626677Z"
+}

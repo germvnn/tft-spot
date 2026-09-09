@@ -10,12 +10,13 @@
 - [x] Verify composition references
 - [x] Fetch champion, ability, item, augment, and trait UI assets
 - [x] Make the complete local snapshot reproducible with one Python script
+- [x] Discover sidebar variants, non-public guides, and tier-X entries
 - [x] Refresh and reconcile the complete snapshot from the Configurator UI
 
 ### Normalization
 
-- [ ] Implement SvelteKit composition payload extractor
-- [ ] Add composition parser fixture test
+- [x] Implement SvelteKit composition payload extractor
+- [x] Add composition parser fixture test
 - [ ] Normalize compositions, champions, items, augments, and traits
 - [ ] Convert champion trait IDs to Trait.apiName
 - [ ] Validate champion, item, augment, and trait references
@@ -71,3 +72,16 @@ Stage, economy, level, board strength, contested comps, scouting, positioning, t
 - [ ] Curate alternative openers and augment conditions for individual compositions
 - [ ] Validate role priors and the 25% item-plan blend with player-reviewed cases
 - [ ] Collect real 2-1 inputs for independent validation (synthetic cases are not substitutes)
+
+
+## Reliability refactor (2026-09-09)
+
+- [x] Share the standard-library SvelteKit parser between downloader and application
+- [x] Load each raw source file once per ranking/simulation/batch operation
+- [x] Separate source presentation, expert-rule validation and configurator state
+- [x] Validate equivalent augment priorities before writing configurations
+- [x] Preserve edits made while saving and ignore stale workspace responses
+- [x] Preserve reference labels through repeated simulator replays
+- [x] Serialize API data readers with source refresh and configuration writes
+- [x] Archive orphaned expert rules during refresh and mark affected configurations draft
+- [x] Add backend and browser regressions for review findings

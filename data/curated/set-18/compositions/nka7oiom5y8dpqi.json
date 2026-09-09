@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "sourceId": "nka7oiom5y8dpqi",
+  "setNumber": 18,
+  "status": "ready",
+  "weights": {
+    "units": 40,
+    "components": 30,
+    "augments": 30
+  },
+  "units": [
+    {
+      "apiName": "DA_18_MasterYi_AD",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_Karma18",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_18_Yorick",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_Gromp18_AP",
+      "priority": "medium",
+      "core": false
+    }
+  ],
+  "components": [
+    {
+      "apiName": "DA_Component_RecurveBow",
+      "priority": "essential"
+    },
+    {
+      "apiName": "DA_Component_NeedlesslyLargeRod",
+      "priority": "essential"
+    },
+    {
+      "apiName": "DA_Component_BFSword",
+      "priority": "essential"
+    },
+    {
+      "apiName": "DA_Component_ChainVest",
+      "priority": "essential"
+    }
+  ],
+  "augments": [
+    {
+      "apiName": "DA_LatentForge",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_PortableForge",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_ForgedInStrength",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_LivingForge",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_URF",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_NestingAnvils",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_HeroicGrabBag",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_LegionOfThrees",
+      "priority": "medium"
+    }
+  ],
+  "strategy": {
+    "openers": [],
+    "itemOverrides": [],
+    "augmentConditions": []
+  },
+  "notes": "",
+  "updatedAt": "2026-09-09T10:57:15.586373Z"
+}

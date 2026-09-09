@@ -201,3 +201,40 @@ def test_top3_labels_survive_save_and_are_measured_on_replay(simulation_root):
     replay = generate_run(simulation_root, SimulationRequest(count=1), loaded)
     assert replay["benchmark"]["holdout"]["reviewedCases"] == 1
     assert replay["cases"][0]["review"] is None
+
+
+def test_labels_survive_multiple_saved_replays_and_new_reviews_take_precedence(
+    simulation_root,
+):
+    root = simulation_root
+    options = SimulationRequest(count=1)
+    run = generate_run(root, options)
+    save_review(
+        root,
+        run["id"],
+        1,
+        Review(
+            sourceId="source-1",
+            verdict="about_right",
+            acceptableSourceIds=["source-1"],
+            split="holdout",
+            notes="Original label",
+        ),
+    )
+    for _ in range(3):
+        run = generate_run(root, options, load_run(root, run["id"]))
+        assert run["benchmark"]["holdout"]["reviewedCases"] == 1
+        assert run["cases"][0]["referenceReview"]["notes"] == "Original label"
+    save_review(
+        root,
+        run["id"],
+        1,
+        Review(
+            sourceId="source-1",
+            verdict="unrealistic",
+            notes="Corrected label",
+        ),
+    )
+    replay = generate_run(root, options, load_run(root, run["id"]))
+    assert replay["benchmark"]["holdout"]["reviewedCases"] == 0
+    assert replay["cases"][0]["referenceReview"]["notes"] == "Corrected label"

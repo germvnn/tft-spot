@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "sourceId": "ji4wk4o7hhz9bux",
+  "setNumber": 18,
+  "status": "ready",
+  "weights": {
+    "units": 40,
+    "components": 30,
+    "augments": 30
+  },
+  "units": [
+    {
+      "apiName": "DA_18_Sentry",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_Gromp18_AP",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_Scuttlecrab18",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_KogMaw18_AD",
+      "priority": "medium",
+      "core": false
+    }
+  ],
+  "components": [
+    {
+      "apiName": "DA_Component_TearOfTheGoddess",
+      "priority": "essential"
+    },
+    {
+      "apiName": "DA_Component_NeedlesslyLargeRod",
+      "priority": "essential"
+    },
+    {
+      "apiName": "DA_Component_GiantsBelt",
+      "priority": "essential"
+    }
+  ],
+  "augments": [
+    {
+      "apiName": "DA_SeraphimsStaff",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_DeadlierCaps",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_WandOverflow",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_Replication",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_FlowingTears",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_MissedConnections",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_18_RiftbeastTraitAugment",
+      "priority": "medium"
+    },
+    {
+      "apiName": "DA_WorththeWait",
+      "priority": "medium"
+    }
+  ],
+  "strategy": {
+    "openers": [],
+    "itemOverrides": [],
+    "augmentConditions": []
+  },
+  "notes": "",
+  "updatedAt": "2026-09-09T10:57:15.312500Z"
+}

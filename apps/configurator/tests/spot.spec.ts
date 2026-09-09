@@ -70,6 +70,7 @@ const response = {
       requiredAugmentApiName: null,
       mainChampion: akali,
       finalUnits: [akali],
+      tier: "A",
       style: "Reroll",
       weights: { units: 40, components: 30, augments: 30 },
       evidence: {
@@ -171,6 +172,7 @@ test("counts mouse buttons, filters costs, submits spot and shows explained rank
   await expect(
     page.getByRole("heading", { name: "Akali Direction" }),
   ).toBeVisible();
+  await expect(page.getByText("TIER A", { exact: true })).toBeVisible();
   await expect(page.locator(".result-score")).toContainText("85.0");
   await expect(page.locator(".result-reasons")).toContainText("Akali ×2");
   await expect(page.locator(".result-reasons")).toContainText(
@@ -513,4 +515,99 @@ test("recommendations explain item holder and distinguish unknown augment", asyn
   await page.locator('.spot-unavailable summary').click();
   await expect(page.locator('.spot-unavailable')).toContainText('Augment nieoceniony');
   await page.locator('.spot-result').screenshot({path:'test-results/item-evidence.png'});
+});
+
+
+test("reselecting the active composition keeps its editor visible", async ({ page }) => {
+  await mockData(page);
+  await page.goto("/#configurator");
+  const heading = page.getByRole("heading", { name: "Akali Direction", exact: true });
+  await expect(heading).toBeVisible();
+  await page.locator("textarea").fill("Keep this unsaved edit");
+  page.on("dialog", () => { throw new Error("Reselecting must not discard edits"); });
+  await page.getByRole("navigation", { name: "Kompozycje" }).getByRole("button").click();
+  await expect(heading).toBeVisible();
+  await expect(page.locator("textarea")).toHaveValue("Keep this unsaved edit");
+  await expect(page.getByText("Ładuję raw composition")).toHaveCount(0);
+});
+
+test("saving preserves edits made while the request is pending", async ({ page }) => {
+  await mockData(page);
+  let finish: () => void = () => {};
+  const gate = new Promise<void>(resolve => { finish = resolve; });
+  const submissions: Record<string, unknown>[] = [];
+  await page.route("**/api/compositions/comp/configuration", async route => {
+    const configuration = route.request().postDataJSON();
+    submissions.push(configuration);
+    if (submissions.length === 1) await gate;
+    await route.fulfill({ json: { configuration } });
+  });
+  await page.goto("/#configurator");
+  const notes = page.locator("textarea");
+  const save = page.getByRole("button", { name: "Zapisz konfigurację", exact: true });
+  await notes.fill("First edit");
+  const sent = page.waitForRequest("**/api/compositions/comp/configuration");
+  await save.click();
+  await sent;
+  await expect(page.getByRole("navigation", { name: "Kompozycje" }).getByRole("button")).toBeDisabled();
+  await notes.fill("Newer edit");
+  finish();
+  await expect(page.getByRole("status")).toContainText("Zapisano konfigurację");
+  await expect(notes).toHaveValue("Newer edit");
+  await expect(save).toBeEnabled();
+  await save.click();
+  await expect(save).toBeDisabled();
+  expect(submissions.map(value => value.notes)).toEqual(["First edit", "Newer edit"]);
+});
+
+test("fast composition changes ignore completion of cancelled requests", async ({ page }) => {
+  await mockData(page);
+  await page.route("**/api/compositions", route => route.fulfill({ json: {
+    compositions: ["comp", "other"].map((sourceId, position) => ({
+      sourceId, title: sourceId === "comp" ? "Akali Direction" : "Other Direction",
+      slug: sourceId, position, configured: true,
+    })),
+  }}));
+  let finish: () => void = () => {};
+  const gate = new Promise<void>(resolve => { finish = resolve; });
+  await page.route("**/api/compositions/other", async route => {
+    await gate;
+    await route.fulfill({ json: {
+      ...workspace, source: { ...workspace.source, sourceId: "other", title: "Other Direction" },
+      configuration: { ...legacyConfiguration, sourceId: "other" },
+    }});
+  });
+  await page.goto("/#configurator");
+  await expect(page.getByRole("heading", { name: "Akali Direction", exact: true })).toBeVisible();
+  const nav = page.getByRole("navigation", { name: "Kompozycje" });
+  const started = page.waitForRequest("**/api/compositions/other");
+  await nav.getByRole("button", { name: /Other Direction/ }).click();
+  await started;
+  await nav.getByRole("button", { name: /Akali Direction/ }).click();
+  finish();
+  await expect(page.getByRole("heading", { name: "Akali Direction", exact: true })).toBeVisible();
+  await expect(page.getByText("Ładuję raw composition")).toHaveCount(0);
+});
+
+
+test("retired expert rules remain visible and survive an ordinary save", async ({ page }) => {
+  await mockData(page);
+  const retiredStrategyRules = [{
+    kind: "augment_conditions",
+    rule: { augmentApiName: "removed", championApiName: "akali", reason: "My pair assessment" },
+    reason: "Augment conditions require a listed augment",
+  }];
+  await page.route("**/api/compositions/comp", route => route.fulfill({ json: {
+    ...workspace,
+    configuration: { ...legacyConfiguration, status: "draft", retiredStrategyRules },
+  }}));
+  await page.route("**/api/compositions/comp/configuration", route =>
+    route.fulfill({ json: { configuration: route.request().postDataJSON() } }));
+  await page.goto("/#configurator");
+  await expect(page.getByRole("note")).toContainText("Warunek augmentu: My pair assessment");
+  await expect(page.getByRole("checkbox", { name: /Gotowa dla silnika/ })).not.toBeChecked();
+  await page.locator("textarea").fill("Reviewed source update");
+  const sent = page.waitForRequest("**/api/compositions/comp/configuration");
+  await page.getByRole("button", { name: "Zapisz konfigurację", exact: true }).click();
+  expect((await sent).postDataJSON().retiredStrategyRules).toEqual(retiredStrategyRules);
 });

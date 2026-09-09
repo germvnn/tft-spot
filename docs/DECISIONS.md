@@ -135,3 +135,55 @@ Concurrent API writes are serialized with the refresh.
 For backward compatibility, a missing top-level set field is resolved only from
 consistent explicit guide.set values. Slugs and other naming conventions are not
 used to infer the set.
+
+## ADR-031 — Complete TFT Academy guide discovery
+
+Fetch the Set-specific guide collection once from the listing's SvelteKit data
+endpoint and store that response unchanged. Index every guide whose explicit
+`guide.set` matches the requested set, preserving source array order, non-public
+guides, tier-X entries and sidebar variants. Use `guide.id` as the unique source
+identity. `compSlug` is routing metadata only and may be duplicated, empty, null
+or missing.
+
+Index entries may point to the same raw guide-collection response. Consumers
+select the requested record by `guide.id` and retain compatibility with legacy
+per-route responses containing `queriedGuide`. Refresh removal decisions compare
+against this complete guide index, so a composition moved from the main tier list
+into a sidebar variant is not deleted.
+
+
+## ADR-032 — Operation-local snapshots and shared transformations
+
+Use a simple SourceSnapshot value containing the composition index, catalogs and
+decoded guides. Load each raw JSON and decode each guide collection once per
+ranking, simulation or batch operation; do not cache across requests. Presentation
+functions build UI cards without performing I/O. Expert-rule validation belongs
+with configuration models and is shared by saving and compilation. The standalone
+downloader imports the package's standard-library parser via the repository src
+path; downloading still requires no third-party packages.
+
+The local API uses one reentrant process lock for composition/catalog/ranking
+reads, simulation generation and refresh/configuration writes. Readers wait for
+refresh to finish, including download and installation. This deliberately simple
+contract targets one server process; independently launched writers and multiple
+server workers are outside it.
+
+## ADR-033 — Preserve manual work across asynchronous operations and refresh
+
+Configurator state lives in useConfigurationEditor, separate from controls and
+settings presentation. A save response advances the saved baseline; it replaces
+the current editor only when no newer edits have occurred. Composition switching
+and competing write operations are disabled while a write is pending. Aborted
+workspace requests cannot update data or loading state.
+
+Refresh validates expert rules individually. A rule with a removed or invalid
+reference moves unchanged into retiredStrategyRules, with its kind and the
+validation reason. Valid rules remain unchanged. Affected compositions become
+draft for human review; subsequent refreshes preserve this archive without
+duplicating entries. Existing files without this optional field read as an empty
+archive. Explicit saves/bootstrap retain the archive.
+
+Equivalent augment priorities are checked with the same function at save and
+compile time. Conflicting decisions fail before replacing a curated file.
+Simulator replay inherits the most recent direct review, falling back to the
+inherited reference review, so repeated replay retains labels.

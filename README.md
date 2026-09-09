@@ -15,9 +15,13 @@ python scripts/download_tft_academy.py
 This downloads the current Set 18 snapshot into `data/`:
 
 - TFT Academy composition listing and asset API responses,
-- every visible composition's SvelteKit response,
+- the complete SvelteKit guide collection, including sidebar variants,
+  non-public guides, and tier-X entries,
 - champion, ability, item, augment, and trait images,
 - raw-data, composition, and asset manifests with hashes and source URLs.
+
+Each guide is indexed by its own `guide.id`. Duplicate, empty, and missing
+`compSlug` values are preserved and are never used as source identity.
 
 Pass `--skip-assets` for a faster raw-data-only refresh. Run the command with
 `--help` to see destination, set, retry, timeout, and concurrency options.
@@ -27,7 +31,8 @@ a temporary directory. It validates every guide before replacing the live raw
 data and assets, then reconciles curated configurations. New compositions are
 created as `ready`, settings for unchanged apiNames are preserved, obsolete
 decisions are removed, and curated files whose composition disappeared from the
-source are deleted. A failed download leaves the active snapshot untouched.
+complete guide collection are deleted. A failed download leaves the active
+snapshot untouched.
 
 ## Composition configurator
 
@@ -91,3 +96,15 @@ Open the **Symulator** tab to generate 50 seeded opener cases and rate individua
 composition results. Saved runs and human reviews survive refresh. Use **Przelicz
 te same spoty** after tuning the engine to compare the same inputs, or **Eksport
 JSON** to download the evaluation dataset. See [simulator details](docs/SIMULATOR.md).
+
+
+## Development checks
+
+Run backend checks with `uv run pytest`, `uv run ruff check .` and
+`uv run mypy src`. Frontend checks are `pnpm --dir apps/configurator build`,
+`pnpm --dir apps/configurator lint` and the browser tests documented above.
+
+Use a single API process. Data reads wait while a source refresh is running,
+so each operation observes a consistent snapshot. If refresh retires an expert
+rule, its original contents remain in `retiredStrategyRules`; the Configurator
+shows a notice and the composition becomes draft for review.

@@ -101,9 +101,11 @@ def refresh_tft_academy(
                 )
             refreshed_source_ids = _source_ids(staged_repository)
 
+            snapshot = staged_repository.load_snapshot()
+
             # Validate all raw guide references before touching live data.
             for source_id in refreshed_source_ids:
-                staged_repository.get_workspace(source_id)
+                staged_repository.get_workspace(source_id, snapshot=snapshot)
 
             live_curated = root / "data" / "curated"
             staged_curated = staged_data / "curated"
@@ -129,6 +131,7 @@ def refresh_tft_academy(
             )
             reconciled = staged_repository.reconcile_configurations(
                 ready_source_ids=set(added_source_ids),
+                snapshot=snapshot,
             )
 
             _install_directories(
