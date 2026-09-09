@@ -10,6 +10,7 @@
 - [x] Verify composition references
 - [x] Fetch champion, ability, item, augment, and trait UI assets
 - [x] Make the complete local snapshot reproducible with one Python script
+- [x] Refresh and reconcile the complete snapshot from the Configurator UI
 
 ### Normalization
 

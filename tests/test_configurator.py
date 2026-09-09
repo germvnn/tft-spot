@@ -27,6 +27,7 @@ def build_source_fixture(root: Path) -> dict[str, Any]:
     write_json(
         raw / "compositions" / "index.json",
         {
+            "set": 18,
             "compositions": [
                 {
                     "backend_id": "source-1",
@@ -36,7 +37,7 @@ def build_source_fixture(root: Path) -> dict[str, Any]:
                         "data/raw/tft_academy/compositions/source-1.json"
                     ),
                 }
-            ]
+            ],
         },
     )
     write_json(raw / "compositions" / "source-1.json", {})
@@ -142,6 +143,26 @@ def build_source_fixture(root: Path) -> dict[str, Any]:
         ],
         "augments": [{"apiName": "DA_Augment", "disabled": False}],
     }
+
+
+def test_snapshot_set_number_falls_back_to_raw_guides_for_legacy_index(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    guide = build_source_fixture(tmp_path)
+    index_path = (
+        tmp_path / "data" / "raw" / "tft_academy" / "compositions" / "index.json"
+    )
+    index = json.loads(index_path.read_text(encoding="utf-8"))
+    index.pop("set")
+    write_json(index_path, index)
+    monkeypatch.setattr(
+        repository_module,
+        "extract_queried_guide",
+        lambda _payload: guide,
+    )
+
+    assert ConfigurationRepository(tmp_path).snapshot_set_number() == 18
 
 
 def test_scoring_weights_must_add_up_to_one_hundred() -> None:

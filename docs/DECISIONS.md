@@ -121,3 +121,17 @@ with at least two components. It is not a distribution of real games. Reviews
 may label several acceptable compositions and assign the case to calibration or
 holdout. Top-3 hit rate counts only labeled, realistic cases in each split.
 Frozen replay inherits prior labels as references; no weights are auto-tuned.
+
+## ADR-030 — Transactional TFT Academy refresh
+
+Configurator-triggered refreshes download a complete raw and asset snapshot into
+a temporary directory and validate every composition before installing it.
+Installation replaces raw data, assets and the active set's curated composition
+directory with rollback on replacement failure. Existing curated decisions are
+matched by apiName; removed decisions are dropped and new ones get the documented
+defaults. New compositions become ready. A curated file is deleted only when its
+sourceId existed in the previous composition index and is absent from the new one.
+Concurrent API writes are serialized with the refresh.
+For backward compatibility, a missing top-level set field is resolved only from
+consistent explicit guide.set values. Slugs and other naming conventions are not
+used to infer the set.

@@ -12,6 +12,7 @@ wheels/
 # Reproducible downloaded datasets and UI assets
 data/assets/
 data/raw/
+.tft-spot-refresh-*/
 
 # Browser test artifacts
 apps/configurator/test-results/

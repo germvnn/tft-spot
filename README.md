@@ -22,6 +22,13 @@ This downloads the current Set 18 snapshot into `data/`:
 Pass `--skip-assets` for a faster raw-data-only refresh. Run the command with
 `--help` to see destination, set, retry, timeout, and concurrency options.
 
+The Configurator's **Odśwież snapshot** action runs the same full download into
+a temporary directory. It validates every guide before replacing the live raw
+data and assets, then reconciles curated configurations. New compositions are
+created as `ready`, settings for unchanged apiNames are preserved, obsolete
+decisions are removed, and curated files whose composition disappeared from the
+source are deleted. A failed download leaves the active snapshot untouched.
+
 ## Composition configurator
 
 Install dependencies once:

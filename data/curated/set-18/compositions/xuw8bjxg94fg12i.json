@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceId": "vz81ruankglv606",
+  "sourceId": "xuw8bjxg94fg12i",
   "setNumber": 18,
   "status": "ready",
   "weights": {
@@ -10,75 +10,75 @@
   },
   "units": [
     {
+      "apiName": "DA_18_Akali_AD",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_18_Camille",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_18_Leona",
+      "priority": "medium",
+      "core": false
+    },
+    {
       "apiName": "DA_18_Ornn",
-      "priority": "medium",
-      "core": false
-    },
-    {
-      "apiName": "DA_18_Varus",
-      "priority": "medium",
-      "core": false
-    },
-    {
-      "apiName": "DA_18_Xayah",
-      "priority": "medium",
-      "core": false
-    },
-    {
-      "apiName": "DA_18_Shen",
       "priority": "medium",
       "core": false
     }
   ],
   "components": [
     {
-      "apiName": "DA_Component_RecurveBow",
-      "priority": "high"
-    },
-    {
       "apiName": "DA_Component_BFSword",
-      "priority": "high"
+      "priority": "essential"
     },
     {
       "apiName": "DA_Component_SparringGloves",
-      "priority": "high"
+      "priority": "essential"
     },
     {
       "apiName": "DA_Component_ChainVest",
-      "priority": "high"
+      "priority": "essential"
+    },
+    {
+      "apiName": "DA_Component_NegatronCloak",
+      "priority": "essential"
     }
   ],
   "augments": [
     {
-      "apiName": "DA_BackupBows",
+      "apiName": "DA_PandorasBench",
       "priority": "medium"
     },
     {
-      "apiName": "DA_OneBuffTwoBuff",
+      "apiName": "DA_PrismaticTicket",
       "priority": "medium"
     },
     {
-      "apiName": "DA_Swordsmith",
+      "apiName": "DA_NoScoutNoPivot",
       "priority": "medium"
     },
     {
-      "apiName": "DA_CarveAPath",
+      "apiName": "DA_EarlyLearnings",
       "priority": "medium"
     },
     {
-      "apiName": "DA_SwordOverflow",
+      "apiName": "DA_WorththeWait",
       "priority": "medium"
     },
     {
-      "apiName": "DA_CaretakersFavor",
+      "apiName": "DA_LuckyGlovesPlus",
       "priority": "medium"
     },
     {
-      "apiName": "DA_BuriedTreasuresIII",
+      "apiName": "DA_SoloPlate",
       "priority": "medium"
     },
     {
-      "apiName": "DA_18_FOURcing",
+      "apiName": "DA_CursedCrown",
       "priority": "medium"
     }
   ],
@@ -88,5 +88,5 @@
     "augmentConditions": []
   },
   "notes": "",
-  "updatedAt": "2026-09-09T05:29:45.185711Z"
+  "updatedAt": "2026-09-09T06:46:12.932213Z"
 }

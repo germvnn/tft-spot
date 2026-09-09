@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from threading import Lock
 
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -11,6 +12,10 @@ from tft_spot.configurator.repository import (
     CompositionNotFoundError,
     ConfigurationRepository,
     ConfiguratorDataError,
+)
+from tft_spot.configurator.source_refresh import (
+    SourceRefreshError,
+    refresh_tft_academy,
 )
 from tft_spot.data.augment_identity import build_augment_aliases
 from tft_spot.engine.compiler import compile_workspace
@@ -33,6 +38,7 @@ ROOT = Path(
     )
 ).resolve()
 repository = ConfigurationRepository(ROOT)
+data_write_lock = Lock()
 
 app = FastAPI(
     title="TFT Spot Configurator API",
@@ -57,13 +63,23 @@ def list_compositions() -> dict[str, object]:
 @app.post("/api/compositions/bootstrap-ready")
 def bootstrap_ready_configurations() -> dict[str, object]:
     try:
-        saved = repository.bootstrap_ready_configurations()
+        with data_write_lock:
+            saved = repository.bootstrap_ready_configurations()
     except ConfiguratorDataError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
     return {
         "saved": len(saved),
         "sourceIds": [configuration.source_id for configuration in saved],
     }
+
+
+@app.post("/api/compositions/refresh-source")
+def refresh_source() -> dict[str, object]:
+    try:
+        with data_write_lock:
+            return refresh_tft_academy(ROOT, repository).as_dict()
+    except SourceRefreshError as error:
+        raise HTTPException(status_code=502, detail=str(error)) from error
 
 
 @app.get("/api/compositions/{source_id}")
@@ -82,7 +98,8 @@ def save_configuration(
     configuration: CompositionConfiguration,
 ) -> dict[str, object]:
     try:
-        saved = repository.save_configuration(source_id, configuration)
+        with data_write_lock:
+            saved = repository.save_configuration(source_id, configuration)
     except CompositionNotFoundError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     except ConfiguratorDataError as error:

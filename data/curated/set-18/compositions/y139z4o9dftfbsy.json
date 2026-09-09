@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceId": "d5xejfzkia4w1c2",
+  "sourceId": "y139z4o9dftfbsy",
   "setNumber": 18,
   "status": "ready",
   "weights": {
@@ -20,65 +20,69 @@
       "core": false
     },
     {
-      "apiName": "DA_18_Caitlyn",
+      "apiName": "DA_Karma18",
       "priority": "medium",
       "core": false
     },
     {
-      "apiName": "DA_18_Tristana",
+      "apiName": "DA_18_Yunara",
       "priority": "medium",
       "core": false
     }
   ],
   "components": [
     {
-      "apiName": "DA_Component_RecurveBow",
-      "priority": "high"
+      "apiName": "DA_Component_TearOfTheGoddess",
+      "priority": "essential"
+    },
+    {
+      "apiName": "DA_Component_BFSword",
+      "priority": "essential"
+    },
+    {
+      "apiName": "DA_Component_SparringGloves",
+      "priority": "essential"
     },
     {
       "apiName": "DA_Component_NeedlesslyLargeRod",
-      "priority": "high"
-    },
-    {
-      "apiName": "DA_Component_NegatronCloak",
-      "priority": "high"
+      "priority": "essential"
     },
     {
       "apiName": "DA_Component_GiantsBelt",
-      "priority": "high"
+      "priority": "essential"
     }
   ],
   "augments": [
     {
-      "apiName": "DA_Expedition",
+      "apiName": "DA_JeweledLotus_I",
       "priority": "medium"
     },
     {
-      "apiName": "DA_SpeedyDoubleKill",
+      "apiName": "DA_JeweledLotus_II",
       "priority": "medium"
     },
     {
-      "apiName": "DA_BackupBows",
+      "apiName": "DA_GlassCannon_Silver",
       "priority": "medium"
     },
     {
-      "apiName": "DA_PrismaticTicket",
+      "apiName": "DA_GlassCannon_Gold",
       "priority": "medium"
     },
     {
-      "apiName": "DA_Replication",
+      "apiName": "DA_18_FOURcing",
       "priority": "medium"
     },
     {
-      "apiName": "DA_ShimmerscaleEssence",
+      "apiName": "DA_Staffsmith",
       "priority": "medium"
     },
     {
-      "apiName": "DA_TradeSector",
+      "apiName": "DA_CyberneticUplink_Gold",
       "priority": "medium"
     },
     {
-      "apiName": "DA_HeroicGrabBag",
+      "apiName": "DA_WandOverflow",
       "priority": "medium"
     }
   ],
@@ -88,5 +92,5 @@
     "augmentConditions": []
   },
   "notes": "",
-  "updatedAt": "2026-09-09T06:46:12.927416Z"
+  "updatedAt": "2026-09-09T06:46:12.922427Z"
 }

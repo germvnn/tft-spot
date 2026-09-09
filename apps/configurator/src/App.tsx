@@ -8,6 +8,7 @@ import {
   CircleDot,
   ExternalLink,
   LoaderCircle,
+  RefreshCw,
   RotateCcw,
   Save,
   Search,
@@ -85,6 +86,15 @@ type CompositionSummary = {
   slug: string
   position: number
   configured: boolean
+}
+
+type SourceRefreshResult = {
+  setNumber: number
+  compositionCount: number
+  addedSourceIds: string[]
+  removedSourceIds: string[]
+  reconciledSourceIds: string[]
+  removedConfigurationSourceIds: string[]
 }
 
 type CompositionWorkspace = {
@@ -303,6 +313,7 @@ function App({ active = true }: { active?: boolean }) {
   const [loadingWorkspace, setLoadingWorkspace] = useState(true)
   const [saving, setSaving] = useState(false)
   const [bootstrapping, setBootstrapping] = useState(false)
+  const [refreshingSource, setRefreshingSource] = useState(false)
   const [notice, setNotice] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null)
 
   useEffect(() => {
@@ -559,6 +570,69 @@ function App({ active = true }: { active?: boolean }) {
     }
   }
 
+  const refreshSource = async () => {
+    if (dirty) {
+      setNotice({
+        tone: 'error',
+        text: 'Najpierw zapisz albo cofnij zmiany bieżącej kompozycji.',
+      })
+      return
+    }
+
+    const confirmed = window.confirm(
+      'Pobrać pełny snapshot TFT Academy i zsynchronizować curated data?\n\nNowe kompozycje zostaną dodane jako ready. Konfiguracje kompozycji usuniętych ze źródła zostaną skasowane.',
+    )
+    if (!confirmed) return
+
+    setRefreshingSource(true)
+    setLoadingList(true)
+    setNotice(null)
+    try {
+      const result = await readJson<SourceRefreshResult>(
+        '/api/compositions/refresh-source',
+        { method: 'POST' },
+      )
+      const { compositions: entries } = await readJson<{
+        compositions: CompositionSummary[]
+      }>('/api/compositions')
+      const nextSelectedId =
+        selectedId && entries.some((entry) => entry.sourceId === selectedId)
+          ? selectedId
+          : entries[0]?.sourceId ?? null
+
+      setCompositions(entries)
+      setSelectedId(nextSelectedId)
+      if (nextSelectedId) {
+        setLoadingWorkspace(true)
+        const nextWorkspace = await loadWorkspace(
+          `/api/compositions/${nextSelectedId}`,
+        )
+        setWorkspace(nextWorkspace)
+        setConfiguration(nextWorkspace.configuration)
+        setBaseline(nextWorkspace.configuration)
+      } else {
+        setWorkspace(null)
+        setConfiguration(null)
+        setBaseline(null)
+      }
+
+      setNotice({
+        tone: 'ok',
+        text:
+          `Odświeżono ${result.compositionCount} kompozycji · ` +
+          `nowe: ${result.addedSourceIds.length} · ` +
+          `usunięte: ${result.removedSourceIds.length} · ` +
+          `zapisane konfiguracje: ${result.reconciledSourceIds.length}.`,
+      })
+    } catch (error) {
+      setNotice({ tone: 'error', text: (error as Error).message })
+    } finally {
+      setRefreshingSource(false)
+      setLoadingList(false)
+      setLoadingWorkspace(false)
+    }
+  }
+
   const saveToolRef = useRef<typeof save | null>(null)
   useEffect(() => {
     saveToolRef.current = save
@@ -644,7 +718,7 @@ function App({ active = true }: { active?: boolean }) {
       </header>
 
       <main className="mx-auto grid max-w-[1720px] gap-0 lg:grid-cols-[300px_minmax(0,1fr)]">
-        <aside className="border-b border-[#252d3a] bg-[#0c1018] lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] lg:border-b-0 lg:border-r">
+        <aside className="border-b border-[#252d3a] bg-[#0c1018] lg:sticky lg:top-32 lg:flex lg:h-[calc(100vh-8rem)] lg:flex-col lg:border-b-0 lg:border-r">
           <div className="border-b border-[#232c39] p-4">
             <div className="mb-3 flex items-center justify-between">
               <div>
@@ -670,6 +744,34 @@ function App({ active = true }: { active?: boolean }) {
               />
             </label>
 
+            <div className="mt-4 border border-[#2c3d4c] bg-[#0f141c] p-3">
+              <div className="mb-2">
+                <span className="text-[10px] font-black uppercase tracking-[0.16em] text-[#738da4]">
+                  Źródło TFT Academy
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={refreshSource}
+                disabled={
+                  loadingList ||
+                  refreshingSource ||
+                  bootstrapping ||
+                  saving ||
+                  dirty
+                }
+                className="secondary-button w-full"
+              >
+                <RefreshCw
+                  className={`h-4 w-4 ${refreshingSource ? 'animate-spin' : ''}`}
+                />
+                {refreshingSource ? 'Odświeżam dane…' : 'Odśwież snapshot'}
+              </button>
+              <p className="mt-2 text-[10px] leading-4 text-[#667789]">
+                Pobiera raw i assety, potem synchronizuje curated.
+              </p>
+            </div>
+
             <div className="mt-4 border border-[#3a3828] bg-[#12140f] p-3">
               <div className="mb-2 flex items-center justify-between">
                 <span className="text-[10px] font-black uppercase tracking-[0.16em] text-[#8f7b45]">
@@ -685,6 +787,7 @@ function App({ active = true }: { active?: boolean }) {
                 disabled={
                   loadingList ||
                   bootstrapping ||
+                  refreshingSource ||
                   dirty ||
                   compositions.length === 0
                 }
@@ -707,7 +810,7 @@ function App({ active = true }: { active?: boolean }) {
 
           <nav
             aria-label="Kompozycje"
-            className="max-h-72 overflow-y-auto p-2 lg:max-h-[calc(100vh-17.5rem)]"
+            className="max-h-72 overflow-y-auto p-2 lg:min-h-0 lg:max-h-none lg:flex-1"
           >
             {loadingList ? (
               <div className="grid h-32 place-items-center text-[#758196]">

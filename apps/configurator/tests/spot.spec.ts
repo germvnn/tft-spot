@@ -281,6 +281,91 @@ test("core unit defaults to false and survives saving and refresh", async ({
   await expect(checkbox).toBeChecked();
 });
 
+test("refreshes TFT Academy snapshot and reports composition changes", async ({
+  page,
+}) => {
+  await mockData(page);
+  await page.route("**/api/compositions/refresh-source", async (route) => {
+    expect(route.request().method()).toBe("POST");
+    await route.fulfill({
+      json: {
+        setNumber: 18,
+        compositionCount: 24,
+        addedSourceIds: ["new-comp"],
+        removedSourceIds: ["old-comp"],
+        reconciledSourceIds: ["new-comp"],
+        removedConfigurationSourceIds: ["old-comp"],
+      },
+    });
+  });
+  page.on("dialog", (dialog) => dialog.accept());
+
+  await page.goto("/#configurator");
+  const request = page.waitForRequest(
+    "**/api/compositions/refresh-source",
+  );
+  await page
+    .getByRole("button", { name: "Odśwież snapshot" })
+    .click();
+  await request;
+
+  await expect(page.getByRole("status")).toContainText(
+    "Odświeżono 24 kompozycji",
+  );
+  await expect(page.getByRole("status")).toContainText("nowe: 1");
+  await expect(page.getByRole("status")).toContainText("usunięte: 1");
+});
+
+test("keeps every composition reachable in the desktop sidebar", async ({
+  page,
+}) => {
+  await mockData(page);
+  const compositions = Array.from({ length: 25 }, (_, index) => ({
+    sourceId: `comp-${index + 1}`,
+    title: `Composition ${index + 1}`,
+    slug: `composition-${index + 1}`,
+    position: index,
+    configured: true,
+  }));
+  await page.route("**/api/compositions", (route) =>
+    route.fulfill({ json: { compositions } }),
+  );
+  await page.route(/\/api\/compositions\/comp-\d+$/, (route) => {
+    const sourceId = new URL(route.request().url()).pathname.split("/").at(-1)!;
+    const composition = compositions.find(
+      (entry) => entry.sourceId === sourceId,
+    )!;
+    return route.fulfill({
+      json: {
+        ...workspace,
+        source: {
+          ...workspace.source,
+          sourceId,
+          title: composition.title,
+          slug: composition.slug,
+        },
+        configuration: {
+          ...workspace.configuration,
+          sourceId,
+        },
+      },
+    });
+  });
+
+  await page.goto("/#configurator");
+  const list = page.getByRole("navigation", { name: "Kompozycje" });
+  await expect(list.getByRole("button")).toHaveCount(25);
+  const listBox = await list.boundingBox();
+  expect(listBox).not.toBeNull();
+  expect(listBox!.y + listBox!.height).toBeLessThanOrEqual(1001);
+
+  const lastComposition = list.getByRole("button", {
+    name: /Composition 25/,
+  });
+  await lastComposition.scrollIntoViewIfNeeded();
+  await expect(lastComposition).toBeInViewport();
+});
+
 test("simulator generates fifty cases and persists a human review across refresh", async ({
   page,
 }) => {

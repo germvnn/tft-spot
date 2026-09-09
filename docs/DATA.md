@@ -17,6 +17,17 @@ The complete snapshot is reproducible with
 composition routes from the listing HTML, stores each route's SvelteKit data
 response, downloads entity resources and UI assets, and writes provenance manifests.
 
+Configurator source refreshes are staged under a temporary project directory.
+The staged raw snapshot is parsed and all composition references are resolved
+before raw data, assets, and the active set's curated composition directory are
+swapped into place. Existing decisions are retained by apiName, source order is
+rebuilt from the new guide, new decisions receive explicit defaults, and new
+compositions become ready. Curated files are deleted only for sourceIds present
+in the previous index and absent from the refreshed index.
+Legacy composition indexes may omit their top-level set field. Refresh resolves
+that compatibility case from the explicit guide.set values and requires every
+guide to agree; it never infers a set number from route slugs.
+
 Compositions come from the SvelteKit hydration payload in GET https://tftacademy.com/tierlist/comps, observed at data[2].data.guides. The current snapshot has 48 guides and 48 unique guide.id values but 47 unique compSlug values. Use guide.id as sourceId.
 
 Counts: 260 augments, 36 traits, 72 champions, 139 items. Seven champions cost 0 and must remain.

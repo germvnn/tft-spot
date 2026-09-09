@@ -51,7 +51,12 @@ class ConfigurationRepository:
             )
         return result
 
-    def get_workspace(self, source_id: str) -> dict[str, Any]:
+    def get_workspace(
+        self,
+        source_id: str,
+        *,
+        reconcile_configuration: bool = False,
+    ) -> dict[str, Any]:
         _index, entry = self._find_entry(source_id)
         response_path = self.root / str(entry["response_file"])
         guide = extract_queried_guide(self._read_json(response_path))
@@ -135,6 +140,7 @@ class ConfigurationRepository:
             unit_api_names=list(dict.fromkeys(unit["apiName"] for unit in early_units)),
             component_api_names=list(component_counts),
             augment_api_names=[augment["apiName"] for augment in augment_cards],
+            reconcile=reconcile_configuration,
         )
         main_champion_api_name = (guide.get("mainChampion") or {}).get("apiName")
         main_champion = (
@@ -188,9 +194,16 @@ class ConfigurationRepository:
         }
 
     def save_configuration(
-        self, source_id: str, configuration: CompositionConfiguration
+        self,
+        source_id: str,
+        configuration: CompositionConfiguration,
+        *,
+        reconcile_existing: bool = False,
     ) -> CompositionConfiguration:
-        workspace = self.get_workspace(source_id)
+        workspace = self.get_workspace(
+            source_id,
+            reconcile_configuration=reconcile_existing,
+        )
         from tft_spot.engine.compiler import validate_strategy
 
         try:
@@ -312,6 +325,94 @@ class ConfigurationRepository:
             for source_id, configuration in prepared
         ]
 
+    def reconcile_configurations(
+        self,
+        *,
+        ready_source_ids: set[str],
+    ) -> list[CompositionConfiguration]:
+        """Align curated decisions with refreshed raw guides.
+
+        Existing decisions for apiNames still present in the guide are preserved.
+        Obsolete decisions are dropped, newly discovered ones receive the normal
+        defaults, and only new or materially changed files are written.
+        """
+        saved: list[CompositionConfiguration] = []
+        for composition in self.list_compositions():
+            source_id = str(composition["sourceId"])
+            workspace = self.get_workspace(
+                source_id,
+                reconcile_configuration=True,
+            )
+            current = CompositionConfiguration.model_validate(
+                workspace["configuration"]
+            )
+            desired = current.model_copy(
+                update={"status": "ready"} if source_id in ready_source_ids else {}
+            )
+            target = self._configuration_path(desired.set_number, source_id)
+            if target.exists():
+                existing = CompositionConfiguration.model_validate(
+                    self._read_json(target)
+                )
+                if self._configuration_content(existing) == self._configuration_content(
+                    desired
+                ):
+                    continue
+            saved.append(
+                self.save_configuration(
+                    source_id,
+                    desired,
+                    reconcile_existing=True,
+                )
+            )
+        return saved
+
+    def delete_configurations(
+        self,
+        *,
+        set_number: int,
+        source_ids: set[str],
+    ) -> list[str]:
+        deleted: list[str] = []
+        for source_id in sorted(source_ids):
+            target = self._configuration_path(set_number, source_id)
+            if target.exists():
+                target.unlink()
+                deleted.append(source_id)
+        return deleted
+
+    def snapshot_set_number(self) -> int:
+        index = self._read_json(self.raw_dir / "compositions" / "index.json")
+        indexed_set = index.get("set")
+        try:
+            if indexed_set is not None and int(indexed_set) > 0:
+                return int(indexed_set)
+        except TypeError, ValueError:
+            pass
+
+        guide_sets: set[int] = set()
+        for entry in index.get("compositions", []):
+            try:
+                response_path = self.root / str(entry["response_file"])
+                guide = extract_queried_guide(self._read_json(response_path))
+                set_number = int(guide["set"])
+            except (KeyError, TypeError, ValueError) as error:
+                raise ConfiguratorDataError(
+                    "Could not determine set number from a raw composition guide"
+                ) from error
+            if set_number <= 0:
+                raise ConfiguratorDataError(
+                    "Raw composition guide contains an invalid set number"
+                )
+            guide_sets.add(set_number)
+
+        if len(guide_sets) == 1:
+            return guide_sets.pop()
+        raise ConfiguratorDataError(
+            "Composition index has no valid set number and raw guides "
+            f"contain {len(guide_sets)} distinct set numbers"
+        )
+
     def _unit_cards(
         self,
         raw_units: list[dict[str, Any]],
@@ -368,6 +469,7 @@ class ConfigurationRepository:
         unit_api_names: list[str],
         component_api_names: list[str],
         augment_api_names: list[str],
+        reconcile: bool = False,
     ) -> CompositionConfiguration:
         path = self._configuration_path(set_number, source_id)
         existing = (
@@ -381,12 +483,13 @@ class ConfigurationRepository:
                 raise ConfiguratorDataError(
                     "Stored configuration identity does not match raw guide"
                 )
-            for decisions, names, label in (
-                (existing.units, unit_api_names, "unit"),
-                (existing.components, component_api_names, "component"),
-                (existing.augments, augment_api_names, "augment"),
-            ):
-                self._validate_decisions(decisions, set(names), label)
+            if not reconcile:
+                for decisions, names, label in (
+                    (existing.units, unit_api_names, "unit"),
+                    (existing.components, component_api_names, "component"),
+                    (existing.augments, augment_api_names, "augment"),
+                ):
+                    self._validate_decisions(decisions, set(names), label)
         unit_priorities = (
             {d.api_name: d.priority for d in existing.units} if existing else {}
         )
@@ -435,6 +538,8 @@ class ConfigurationRepository:
         )
 
     def _configuration_path(self, set_number: int, source_id: str) -> Path:
+        if not source_id or Path(source_id).name != source_id:
+            raise ConfiguratorDataError(f"Unsafe composition sourceId: {source_id!r}")
         return (
             self.root
             / "data"
@@ -443,6 +548,14 @@ class ConfigurationRepository:
             / "compositions"
             / f"{source_id}.json"
         )
+
+    @staticmethod
+    def _configuration_content(
+        configuration: CompositionConfiguration,
+    ) -> dict[str, Any]:
+        payload = configuration.model_dump(mode="json", by_alias=True)
+        payload.pop("updatedAt", None)
+        return payload
 
     @staticmethod
     def _entity_card(

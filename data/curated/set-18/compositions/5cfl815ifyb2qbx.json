@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceId": "oaeid9p1u7zaqx9",
+  "sourceId": "5cfl815ifyb2qbx",
   "setNumber": 18,
   "status": "ready",
   "weights": {
@@ -10,79 +10,75 @@
   },
   "units": [
     {
-      "apiName": "DA_Karma18",
+      "apiName": "DA_18_Ornn",
       "priority": "medium",
       "core": false
     },
     {
-      "apiName": "DA_18_Rakan",
+      "apiName": "DA_18_Xayah",
       "priority": "medium",
       "core": false
     },
     {
-      "apiName": "DA_18_Yorick",
+      "apiName": "DA_18_Varus",
       "priority": "medium",
       "core": false
     },
     {
-      "apiName": "DA_18_Yunara",
+      "apiName": "DA_18_Shen",
       "priority": "medium",
       "core": false
     }
   ],
   "components": [
     {
-      "apiName": "DA_Component_TearOfTheGoddess",
-      "priority": "high"
-    },
-    {
       "apiName": "DA_Component_BFSword",
-      "priority": "high"
+      "priority": "essential"
     },
     {
       "apiName": "DA_Component_SparringGloves",
-      "priority": "high"
+      "priority": "essential"
     },
     {
-      "apiName": "DA_Component_NeedlesslyLargeRod",
-      "priority": "high"
+      "apiName": "DA_Component_ChainVest",
+      "priority": "essential"
     },
     {
-      "apiName": "DA_Component_GiantsBelt",
-      "priority": "high"
+      "apiName": "DA_Component_RecurveBow",
+      "priority": "essential"
     }
   ],
   "augments": [
     {
-      "apiName": "DA_Slammin",
+      "apiName": "DA_Swordsmith",
       "priority": "medium"
     },
     {
-      "apiName": "DA_JeweledLotus_I",
+      "apiName": "DA_CarveAPath",
       "priority": "medium"
     },
     {
-      "apiName": "DA_CommerceCore",
+      "apiName": "DA_SwordOverflow",
       "priority": "medium"
     },
     {
-      "apiName": "DA_18_BigGrabBag",
+      "apiName": "DA_BacklineBlueprint",
       "priority": "medium"
     },
     {
-      "apiName": "DA_FeelingLucky",
+      "apiName": "DA_CookingPot",
       "priority": "medium"
     },
     {
-      "apiName": "DA_ExclusiveCustomization",
+      "apiName": "DA_SpreadingRoots",
       "priority": "medium"
     },
     {
-      "apiName": "DA_Staffsmith",
+      "apiName": "DA_TheTraitTree",
       "priority": "medium"
     },
     {
-      "apiName": "DA_18_WispRebatePlus",
+      "apiName": "DA_FutureFocused",
       "priority": "medium"
     }
   ],
@@ -92,5 +88,5 @@
     "augmentConditions": []
   },
   "notes": "",
-  "updatedAt": "2026-09-09T05:29:45.207193Z"
+  "updatedAt": "2026-09-09T06:46:12.882770Z"
 }

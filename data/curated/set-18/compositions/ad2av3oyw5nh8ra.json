@@ -10,17 +10,17 @@
   },
   "units": [
     {
-      "apiName": "DA_Karma18",
-      "priority": "medium",
-      "core": false
-    },
-    {
       "apiName": "DA_18_Rakan",
       "priority": "medium",
       "core": false
     },
     {
       "apiName": "DA_18_Yorick",
+      "priority": "medium",
+      "core": false
+    },
+    {
+      "apiName": "DA_Karma18",
       "priority": "medium",
       "core": false
     },
@@ -92,5 +92,5 @@
     "augmentConditions": []
   },
   "notes": "",
-  "updatedAt": "2026-09-09T05:29:45.152893Z"
+  "updatedAt": "2026-09-09T06:46:12.856392Z"
 }
