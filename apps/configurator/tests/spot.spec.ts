@@ -327,6 +327,7 @@ test("simulator generates fifty cases and persists a human review across refresh
         seed: 42,
         count: 50,
         setNumber: 18,
+        mode: "standard",
       });
       generated = true;
       await route.fulfill({ json: run });
@@ -355,6 +356,8 @@ test("simulator generates fifty cases and persists a human review across refresh
   await expect(board.getByText("Akali", { exact: true })).toHaveCount(0);
   await page.getByLabel("Oceniana kompozycja").selectOption("comp");
   await expect(board.getByText("Akali", { exact: true })).toBeVisible();
+  await page.locator(".sim-accepted").getByLabel("Akali Direction", {exact:true}).check();
+  await page.getByLabel("Zbiór oceny", {exact:true}).selectOption("holdout");
   await page.getByLabel("Ocena wyniku").selectOption("too_low");
   await page.getByLabel("Oczekiwane punkty jednostek").fill("35");
   await page.getByLabel("Komentarz do spotu").fill("Dobry opener");
@@ -363,6 +366,8 @@ test("simulator generates fifty cases and persists a human review across refresh
     page.getByRole("heading", { name: "#2 · Pełny opener" }),
   ).toBeVisible();
   expect(run.cases[0].review?.expectedUnitFit).toBe(87.5);
+  expect(run.cases[0].review?.acceptableSourceIds).toEqual(["comp"]);
+  expect(run.cases[0].review?.split).toBe("holdout");
   await page.reload();
   await expect(page.getByLabel("Komentarz do spotu")).toHaveValue(
     "Dobry opener",
@@ -373,4 +378,54 @@ test("simulator generates fifty cases and persists a human review across refresh
   await expect(
     page.getByText("1/50 ocenionych", { exact: true }),
   ).toBeVisible();
+});
+
+
+test("expert rules save and survive refresh", async ({ page }) => {
+  await mockData(page);
+  let current = { ...workspace, strategyCatalog: { champions: [akali], targets: [akali], items: [bow] } };
+  await page.route("**/api/compositions/comp", route => route.fulfill({json: current}));
+  await page.route("**/api/compositions/comp/configuration", async route => {
+    const configuration = route.request().postDataJSON();
+    current = {...current, configuration};
+    await route.fulfill({json:{configuration}});
+  });
+  await page.goto("/#configurator");
+  const editor = page.locator('.strategy-editor');
+  await editor.getByText('Alternatywne openery (0)', {exact:true}).click();
+  await editor.getByRole('button',{name:'Dodaj opener',exact:true}).click();
+  await editor.getByLabel('Nazwa openera 1').fill('Start alternatywny');
+  await editor.getByLabel('Akali',{exact:true}).check();
+  await editor.getByText('Wyjątki itemowe (0)',{exact:true}).click();
+  await editor.getByRole('button',{name:'Dodaj wyjątek',exact:true}).click();
+  await editor.getByLabel('Dopasowanie',{exact:true}).fill('0.8');
+  await editor.getByLabel('Uzasadnienie',{exact:true}).fill('Zweryfikowany holder');
+  const request = page.waitForRequest('**/api/compositions/comp/configuration');
+  await page.getByRole('button',{name:'Zapisz konfigurację',exact:true}).click();
+  const data=(await request).postDataJSON();
+  expect(data.strategy.openers[0].units).toEqual([{apiName:'akali',core:false}]);
+  expect(data.strategy.itemOverrides[0].fit).toBe(.8);
+  await editor.screenshot({path:"test-results/expert-editor.png"});
+  await expect(page.getByRole('status')).toContainText('Zapisano konfigurację');
+  await page.reload();
+  await editor.getByText('Wyjątki itemowe (1)',{exact:true}).click();
+  await expect(editor.getByLabel('Uzasadnienie',{exact:true})).toHaveValue('Zweryfikowany holder');
+});
+
+test("recommendations explain item holder and distinguish unknown augment", async ({page}) => {
+  await mockData(page);
+  const entry=response.recommendations[0];
+  await page.route('**/api/recommendations',route=>route.fulfill({json:{...response,recommendations:[
+    {...entry,evidence:{...entry.evidence,itemPlan:{available:true,fit:70,plans:[{itemApiName:'shojin',itemName:'Spear of Shojin',holderName:'Akali',holderRole:'Attack Caster',targetName:'Carry',holderBasis:'role_prior',targetBasis:'source_build',upgradedHolder:true}]},componentFit:{baseFit:75,combinedFit:73.75,planShare:.25}}},
+    {...entry,sourceId:'unknown',title:'Unassessed direction',eligible:false,score:null,assessment:'unassessed',resourceFit:{units:50,components:60}}
+  ]}}));
+  await page.goto('/');
+  await page.getByLabel('Augment 1',{exact:true}).selectOption('gold-a');
+  await page.getByRole('button',{name:'Pokaż rekomendacje'}).click();
+  await page.getByText('Plan itemów · 1 do złożenia',{exact:true}).click();
+  await expect(page.locator('.strategy-evidence')).toContainText('Spear of Shojin');
+  await expect(page.locator('.strategy-evidence')).toContainText('Akali 2★');
+  await page.locator('.spot-unavailable summary').click();
+  await expect(page.locator('.spot-unavailable')).toContainText('Augment nieoceniony');
+  await page.locator('.spot-result').screenshot({path:'test-results/item-evidence.png'});
 });

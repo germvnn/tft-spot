@@ -167,3 +167,37 @@ def test_legacy_replay_does_not_apply_new_generation_limits(simulation_root):
     replay = generate_run(simulation_root, SimulationRequest(count=1), run)
     assert replay["generatorVersion"] == "openers-v1"
     assert replay["cases"][0]["spot"] == run["cases"][0]["spot"]
+
+
+def test_coverage_mode_is_reproducible_contains_duplicates_and_replays_exactly(
+    simulation_root,
+):
+    options = SimulationRequest(mode="coverage", count=20, seed=7)
+    first = generate_run(simulation_root, options)
+    second = generate_run(simulation_root, options)
+    assert first["cases"] == second["cases"]
+    assert first["generatorVersion"] == "coverage-v1"
+    assert first["benchmark"]["duplicateComponentCases"] > 0
+    replay = generate_run(simulation_root, SimulationRequest(count=20), first)
+    assert [c["spot"] for c in replay["cases"]] == [c["spot"] for c in first["cases"]]
+    assert replay["mode"] == "coverage"
+
+
+def test_top3_labels_survive_save_and_are_measured_on_replay(simulation_root):
+    run = generate_run(simulation_root, SimulationRequest(count=1))
+    save_review(
+        simulation_root,
+        run["id"],
+        1,
+        Review(
+            sourceId="source-1",
+            verdict="about_right",
+            acceptableSourceIds=["source-1"],
+            split="holdout",
+        ),
+    )
+    loaded = load_run(simulation_root, run["id"])
+    assert loaded["benchmark"]["holdout"]["reviewedCases"] == 1
+    replay = generate_run(simulation_root, SimulationRequest(count=1), loaded)
+    assert replay["benchmark"]["holdout"]["reviewedCases"] == 1
+    assert replay["cases"][0]["review"] is None

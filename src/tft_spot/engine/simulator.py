@@ -51,6 +51,7 @@ class SimulationRequest(ApiModel):
     count: int = Field(default=50, ge=1, le=200, strict=True)
     seed: int = Field(default=42, ge=0, le=2**31 - 1, strict=True)
     source_id: str | None = None
+    mode: Literal["standard", "coverage"] = "standard"
 
 
 class Review(ApiModel):
@@ -58,6 +59,8 @@ class Review(ApiModel):
     verdict: Literal["too_low", "about_right", "too_high", "unrealistic"]
     expected_unit_fit: float | None = Field(default=None, ge=0, le=100)
     expected_score: float | None = Field(default=None, ge=0, le=100)
+    acceptable_source_ids: list[str] = Field(default_factory=list, max_length=48)
+    split: Literal["calibration", "holdout"] = "calibration"
     notes: str = Field(default="", max_length=4000)
 
 
@@ -88,6 +91,7 @@ def load_run(root: Path, run_id: str) -> dict[str, Any]:
             if review_file.exists()
             else None
         )
+    run["benchmark"] = benchmark_summary(run["cases"])
     return run
 
 
@@ -122,6 +126,10 @@ def save_review(
         raise ValueError("Unknown simulation case")
     if review.source_id not in {r["sourceId"] for r in case["rankings"]}:
         raise ValueError("Reviewed composition is not in this case")
+    if not set(review.acceptable_source_ids) <= {
+        r["sourceId"] for r in case["rankings"]
+    }:
+        raise ValueError("Unknown acceptable composition")
     saved = {**review.model_dump(), "updatedAt": datetime.now(UTC).isoformat()}
     _write(_directory(root) / "reviews" / _id(run_id) / f"{case_id}.json", saved)
     return saved
@@ -190,7 +198,7 @@ def generate_run(
         if w["source"]["set"] == options.set_number
         and w["configuration"]["status"] == "ready"
     ]
-    compiled = [compile_workspace(w, aliases) for w in workspaces]
+    compiled = [compile_workspace(w, aliases, catalogs) for w in workspaces]
     if not compiled:
         raise ValueError("No ready compositions for this set")
     eligible_units = {
@@ -245,7 +253,10 @@ def generate_run(
     cases = []
     source_cases = previous["cases"] if previous else [None] * options.count
     for index, old_case in enumerate(source_cases):
-        target = targets[(index // len(PATTERNS)) % len(targets)]
+        target = targets[
+            (index if options.mode == "coverage" else index // len(PATTERNS))
+            % len(targets)
+        ]
         pattern = index % len(PATTERNS)
         if old_case:
             spot = Spot.model_validate(old_case["spot"])
@@ -355,6 +366,13 @@ def generate_run(
             selected_components.extend(
                 rng.sample(remaining, amount - len(selected_components))
             )
+            if options.mode == "coverage" and amount >= 2:
+                # Explicit stress sample, not a claim about real drop frequencies.
+                selected_components[-1] = selected_components[0]
+            component_counts = {
+                n: selected_components.count(n)
+                for n in dict.fromkeys(selected_components)
+            }
             spot = Spot(
                 set_number=options.set_number,
                 offered_augments=offers,
@@ -363,8 +381,8 @@ def generate_run(
                     for name, count in owned.items()
                 ],
                 components=[
-                    OwnedComponent(api_name=name, count=1)
-                    for name in selected_components
+                    OwnedComponent(api_name=name, count=count)
+                    for name, count in component_counts.items()
                 ],
             )
             target_id = target.source_id
@@ -412,12 +430,14 @@ def generate_run(
         "scoringVersion": SCORING_VERSION,
         "generatorVersion": previous["generatorVersion"]
         if previous
-        else GENERATOR_VERSION,
+        else ("coverage-v1" if options.mode == "coverage" else GENERATOR_VERSION),
+        "mode": previous.get("mode", "standard") if previous else options.mode,
         "sourceId": options.source_id,
         "inputFingerprint": fingerprint,
         "compiledInputs": frozen,
         "parentRunId": previous["id"] if previous else None,
         "entities": display,
+        "benchmark": benchmark_summary(cases),
         "compositionBoards": (
             previous.get("compositionBoards", {})
             if previous
@@ -427,3 +447,33 @@ def generate_run(
     }
     _write(_directory(root) / f"{run['id']}.json", run)
     return run
+
+
+def benchmark_summary(cases: list[dict]) -> dict:
+    result: dict[str, Any] = {}
+    for split in ("calibration", "holdout"):
+        reviewed = hits = 0
+        for case in cases:
+            review = case.get("review") or case.get("referenceReview")
+            if (
+                not review
+                or review.get("split", "calibration") != split
+                or review.get("verdict") == "unrealistic"
+            ):
+                continue
+            accepted = set(review.get("acceptableSourceIds", []))
+            if not accepted:
+                continue
+            reviewed += 1
+            top = [r["sourceId"] for r in case["rankings"] if r["eligible"]][:3]
+            hits += bool(accepted.intersection(top))
+        result[split] = {
+            "reviewedCases": reviewed,
+            "top3Hits": hits,
+            "top3HitRate": hits / reviewed if reviewed else None,
+        }
+    result["targetCoverage"] = len({c["targetSourceId"] for c in cases})
+    result["duplicateComponentCases"] = sum(
+        any(c["count"] > 1 for c in case["spot"]["components"]) for case in cases
+    )
+    return result

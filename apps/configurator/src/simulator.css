@@ -226,3 +226,7 @@
 
 .sim-board-panel { margin-top: 20px; }
 .sim-board-panel .sim-final-board { margin: 0; }
+
+.sim-accepted { max-height: 200px; overflow: auto; padding: 12px; border: 1px solid #344156; }
+.sim-accepted label { display: flex; gap: 8px; font-size: 12px; margin: 6px 0; }
+.sim-accepted input { width: auto; }

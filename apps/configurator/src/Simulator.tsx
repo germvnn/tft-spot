@@ -1,3 +1,4 @@
+import StrategyEvidence, { type StrategyEvidenceData } from "./StrategyEvidence";
 import { useEffect, useState } from "react";
 import {
   ChevronLeft,
@@ -16,6 +17,8 @@ type Review = {
   verdict: string;
   expectedUnitFit: number | null;
   expectedScore: number | null;
+  acceptableSourceIds?: string[];
+  split?: "calibration" | "holdout";
   notes: string;
 };
 type Ranking = {
@@ -26,7 +29,7 @@ type Ranking = {
   bestAugmentApiName: string | null;
   requiredAugmentApiName: string | null;
   weights: { units: number };
-  evidence: {
+  evidence: StrategyEvidenceData & {
     units: { apiName: string; copies: number; core: boolean; points: number }[];
     components?: { apiName: string; ownedCount: number; matchedCount: number; points: number }[];
     unitFit: { coreShare: number; coreCount: number };
@@ -67,6 +70,7 @@ type Run = {
   createdAt: string;
   scoringVersion: string;
   entities: Record<string, Entity>;
+  benchmark?: { targetCoverage: number; duplicateComponentCases: number; calibration: {reviewedCases: number; top3HitRate: number|null}; holdout: {reviewedCases: number; top3HitRate: number|null} };
   compositionBoards?: Record<string, BoardUnit[]>;
   cases: Case[];
 };
@@ -142,6 +146,7 @@ export default function Simulator() {
   const [seed, setSeed] = useState(42);
   const [setNumber, setSetNumber] = useState(18);
   const [count, setCount] = useState(50);
+  const [mode, setMode] = useState("standard");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [drafts, setDrafts] = useState<Record<number, Review>>({});
@@ -188,7 +193,7 @@ export default function Simulator() {
         replay && run
           ? `/api/simulator/runs/${run.id}/replay`
           : "/api/simulator/runs",
-        json("POST", replay ? undefined : { seed, count, setNumber }),
+        json("POST", replay ? undefined : { seed, count, setNumber, mode }),
       );
       setRun(next);
       setRuns((current) => [next, ...current]);
@@ -321,6 +326,8 @@ export default function Simulator() {
           />
         </label>
         <label>
+          Tryb
+          <select aria-label="Tryb generatora" value={mode} onChange={e=>setMode(e.target.value)}><option value="standard">Standardowy</option><option value="coverage">Przekrój kompozycji + duplikaty</option></select>
           Seed
           <input
             aria-label="Seed"
@@ -419,6 +426,13 @@ export default function Simulator() {
             </strong>
             <span>
               {run.scoringVersion} · seed {run.seed}
+              {run.benchmark && <span style={{display:'block'}}>Pokrycie: {run.benchmark.targetCoverage} kompozycji · {run.benchmark.duplicateComponentCases} spotów z duplikatami.
+                {(['calibration','holdout'] as const).map(split=>{
+                  const reviewed=run.cases.filter(c=>{const v=c.review??c.referenceReview;return v && v.verdict!=='unrealistic' && (v.split??'calibration')===split && (v.acceptableSourceIds?.length??0)>0;});
+                  const hits=reviewed.filter(c=>c.rankings.filter(r=>r.eligible).slice(0,3).some(r=>(c.review??c.referenceReview)?.acceptableSourceIds?.includes(r.sourceId))).length;
+                  return <span key={split} style={{display:'block'}}>{split==='holdout'?'Weryfikacja':'Kalibracja'}: {reviewed.length?`${Math.round(hits/reviewed.length*100)}% top 3 (${reviewed.length} spotów)`:'brak etykiet'}</span>;
+                })}
+              </span>}
             </span>
           </div>
           <div className="sim-case-buttons" aria-label="Przypadki symulacji">
@@ -570,7 +584,13 @@ export default function Simulator() {
                   </p>)}
                 </div>}
               </>}
-              <label className="sim-field">
+              {selected && <StrategyEvidence evidence={selected.evidence} />}
+                <fieldset className="sim-accepted"><legend>Akceptowalne kierunki do top 3</legend>
+                  <p className="spot-hint">Zaznacz wszystkie sensowne kierunki. Pusta lista oznacza brak etykiet do pomiaru trafności.</p>
+                  {scenario.rankings.map(r=><label key={r.sourceId}><input type="checkbox" checked={draft.acceptableSourceIds?.includes(r.sourceId)??false} onChange={e=>patch({acceptableSourceIds:e.target.checked?[...(draft.acceptableSourceIds??[]),r.sourceId]:(draft.acceptableSourceIds??[]).filter(id=>id!==r.sourceId)})}/>{r.title}</label>)}
+                </fieldset>
+                <label>Zbiór oceny<select aria-label="Zbiór oceny" value={draft.split??'calibration'} onChange={e=>patch({split:e.target.value as 'calibration'|'holdout'})}><option value="calibration">Kalibracja</option><option value="holdout">Niezależna weryfikacja</option></select></label>
+                <label className="sim-field">
                 Jak oceniasz wynik?
                 <select
                   aria-label="Ocena wyniku"
