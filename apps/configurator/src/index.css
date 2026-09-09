@@ -194,3 +194,13 @@ button:disabled {
   background: var(--track-color);
   box-shadow: 0 0 0 1px var(--track-color);
 }
+
+.strategy-editor h2 { font-weight: 800; margin-bottom: 12px; }
+.strategy-editor p { color: #a6b1c2; font-size: 12px; margin: 10px 0; }
+.strategy-editor details { border-top: 1px solid #303b4d; padding: 12px 0; }
+.strategy-editor summary { cursor: pointer; font-size: 13px; }
+.strategy-editor fieldset { display: grid; gap: 8px; border: 1px solid #303b4d; padding: 10px; margin: 10px 0; min-width: 0; }
+.strategy-editor label { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12px; }
+.strategy-editor input:not([type=checkbox]), .strategy-editor select { background: #101824; border: 1px solid #39455a; color: #e0e8f4; padding: 6px; width: 100%; min-width: 0; }
+.strategy-editor button { background: #253047; padding: 7px 12px; font-size: 12px; }
+.strategy-editor button:disabled { opacity: .4; }

@@ -1,3 +1,4 @@
+import StrategyEditor, { type Strategy } from "./StrategyEditor"
 import {
   Boxes,
   Check,
@@ -16,6 +17,8 @@ import {
   UsersRound,
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
+
+const emptyStrategy: Strategy = { openers: [], itemOverrides: [], augmentConditions: [] };
 
 type Priority =
   | 'unset'
@@ -71,6 +74,7 @@ type Configuration = {
   units: UnitPriorityDecision[]
   components: PriorityDecision[]
   augments: PriorityDecision[]
+  strategy?: Strategy
   notes: string
   updatedAt: string | null
 }
@@ -98,6 +102,7 @@ type CompositionWorkspace = {
     augmentTip: string | null
     tips: { stage: string; tip: string }[]
   }
+  strategyCatalog?: { champions: EntityCard[]; targets: EntityCard[]; items: EntityCard[] }
   finalUnits: UnitCard[]
   earlyUnits: UnitCard[]
   itemRecommendations: ItemRecommendation[]
@@ -1082,6 +1087,7 @@ function App({ active = true }: { active?: boolean }) {
                   </section>
                 </div>
                 <aside className="space-y-5">
+                  {workspace.strategyCatalog && <StrategyEditor value={configuration.strategy ?? emptyStrategy} catalog={workspace.strategyCatalog} augments={workspace.augments} onChange={strategy => setConfiguration(current => current ? {...current, strategy} : current)} />}
                   <section className="panel-cut border border-[#343527] bg-[#12140f] p-5">
                     <SectionHeading
                       icon={<SlidersHorizontal className="h-4 w-4" />}

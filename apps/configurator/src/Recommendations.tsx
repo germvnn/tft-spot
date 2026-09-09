@@ -1,3 +1,4 @@
+import StrategyEvidence, { type StrategyEvidenceData } from "./StrategyEvidence";
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowDown,
@@ -18,7 +19,7 @@ type Card = {
   imageUrl: string | null;
   setNumber?: number;
 };
-type Champion = Card & { cost: number };
+type Champion = Card & { cost: number; role?: string };
 type Augment = Card & { tier: number; description: string | null };
 type Catalog = {
   setNumbers: number[];
@@ -34,6 +35,7 @@ type Variant = {
   score: number | null;
   dimensionScores: Record<Dimension, number>;
   weightedContributions: Record<Dimension, number>;
+  augmentContext?: { adjustment: number; conditions: { reason: string; matched: boolean; bonus: number }[] };
 };
 type Result = {
   sourceId: string;
@@ -47,7 +49,9 @@ type Result = {
   style: string | null;
   weights: Record<Dimension, number>;
   variants: Variant[];
-  evidence: {
+  assessment?: string;
+  resourceFit?: { units: number; components: number };
+  evidence: StrategyEvidenceData & {
     units: { apiName: string; copies: number; points: number; core?: boolean }[];
     unitFit?: { coreCount: number; coreShare: number; coreContribution: number; supportContribution: number };
     components: {
@@ -141,6 +145,7 @@ function CounterCard({
       <button
         type="button"
         className="counter-main"
+        title={"role" in card ? String(card.role || "Brak roli w źródle") : card.name}
         aria-label={`${card.name}: ${count} kopii. Dodaj 1`}
         onClick={() => onChange(1)}
         onContextMenu={(event) => {
@@ -768,6 +773,7 @@ export default function Recommendations({ active }: { active: boolean }) {
                           </p>
                         )}
                       </div>
+                      <StrategyEvidence evidence={entry.evidence} />
                       <details>
                         <summary>
                           Porównaj oferowane augmenty <ChevronRight size={14} />
@@ -776,8 +782,8 @@ export default function Recommendations({ active }: { active: boolean }) {
                           {entry.variants.map((variant) => (
                             <div key={variant.augmentApiName}>
                               <span>
-                                {cards.get(variant.augmentApiName)?.name ??
-                                  variant.augmentApiName}
+                                {cards.get(variant.augmentApiName)?.name ?? variant.augmentApiName}
+                                {variant.augmentContext?.conditions.map((c,i)=><small key={i} style={{display:'block'}}> {c.matched?'Spełniony':'Niespełniony'}: {c.reason}{c.matched?` (${c.bonus>0?'+':''}${c.bonus})`:''}</small>)}
                               </span>
                               <strong>
                                 {variant.eligible
@@ -787,7 +793,7 @@ export default function Recommendations({ active }: { active: boolean }) {
                                     ? "Nie spełnia wymogu Core"
                                     : variant.reason === "augment_avoided"
                                       ? "Odrzucony w konfiguracji"
-                                      : "Poza listą kompozycji"}
+                                      : "Nieoceniony dla tej kompozycji"}
                               </strong>
                             </div>
                           ))}
@@ -799,7 +805,7 @@ export default function Recommendations({ active }: { active: boolean }) {
                 {unavailable.length > 0 && (
                   <details className="spot-unavailable">
                     <summary>
-                      Pozostałe kompozycje — {unavailable.length} niedostępnych
+                      Pozostałe kompozycje — {unavailable.length} bez pełnej oceny lub z blokadą
                     </summary>
                     {unavailable.map((entry) => (
                       <div key={entry.sourceId}>
@@ -807,7 +813,9 @@ export default function Recommendations({ active }: { active: boolean }) {
                         <span>
                           {entry.requiredAugmentApiName
                             ? `Wymaga: ${cards.get(entry.requiredAugmentApiName)?.name ?? entry.requiredAugmentApiName}`
-                            : "Brak polecanego augmentu w ofercie"}
+                            : entry.assessment === "unassessed"
+                              ? `Augment nieoceniony · jednostki ${entry.resourceFit?.units.toFixed(1) ?? '—'}/100 · komponenty ${entry.resourceFit?.components.toFixed(1) ?? '—'}/100`
+                              : "Oferowane augmenty odrzucone w konfiguracji"}
                         </span>
                       </div>
                     ))}

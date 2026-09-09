@@ -789,3 +789,8 @@
     flex-direction: column;
   }
 }
+
+.strategy-evidence { margin: 12px 0; color: #afbdcf; font-size: 12px; }
+.strategy-evidence summary { cursor: pointer; color: #d5bd78; }
+.strategy-evidence p, .strategy-evidence li { margin: 8px 0; }
+.strategy-evidence ul { padding-left: 18px; list-style: disc; }
