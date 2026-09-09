@@ -55,3 +55,18 @@ Phase 1 exits when fetching is reproducible, extraction is reliable, normalized 
 Stage, economy, level, board strength, contested comps, scouting, positioning, transitions, automatic detection, statistics, and patch-aware models.
 
 - [x] Simulator openers-v2: unique components with calibrated batch proportions, 7-14 gold of units, maximum four copies and displayed inventory cost.
+
+
+## Research-driven stage 2-1 refinement (2026-09-08)
+
+- [x] Audit champion roles and item semantics against local data and Riot's role documentation
+- [x] Add versioned role priors, explicit item overrides and non-overlapping item plans
+- [x] Add configurable augment conditions and alternative openers with UI editing
+- [x] Distinguish unassessed augment choices from hard eligibility blocks
+- [x] Explain item holders, source/role evidence and component-score contribution
+- [x] Add opt-in broad composition coverage with duplicate-component stress cases
+- [x] Save acceptable top-3 directions and separate calibration/holdout labels
+- [x] Replay the two pre-existing 50-case runs and add a reproducible evaluation command
+- [ ] Curate alternative openers and augment conditions for individual compositions
+- [ ] Validate role priors and the 25% item-plan blend with player-reviewed cases
+- [ ] Collect real 2-1 inputs for independent validation (synthetic cases are not substitutes)

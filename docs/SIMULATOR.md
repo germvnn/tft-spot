@@ -68,3 +68,33 @@ API: GET/POST /api/simulator/runs, GET /api/simulator/runs/{id},
 PUT /api/simulator/runs/{id}/reviews/{caseId}, and
 POST /api/simulator/runs/{id}/replay. POST runs accepts setNumber, seed, count and
 an optional sourceId to focus on one composition (currently API-only).
+
+
+## Coverage and top-3 labels (v3)
+
+The generator request accepts `mode: "standard" | "coverage"`. Standard preserves
+openers-v2. Coverage uses coverage-v1: each case rotates to the next shuffled
+composition, keeping the same inventory budget and component-count schedule;
+for inventories with 2+ components the final component repeats the first. A
+50-case run currently covers all 24 local compositions and has 48 duplicate cases.
+This is deliberate stress coverage, not estimated live-game frequency. UI provides
+the mode selector. Replay preserves the original spots and generator identity.
+
+Reviews add `acceptableSourceIds` and `split` (calibration/holdout). Empty labels
+mean unreviewed for ranking accuracy, even if a numerical review exists. The UI
+can mark multiple acceptable directions and preserves those labels on save and
+refresh. The benchmark reports top3HitRate only over labeled cases, excluding
+unrealistic cases; null means no labeled evidence. Each split is reported
+separately. A hit means at least one accepted direction appears in the assessed
+top three. Reference labels on replay are compared against the new ranking.
+
+Reproduce the comparison from the project root:
+
+```bash
+uv run python scripts/evaluate_recommendations.py --run RUN_UUID --coverage
+```
+
+Repeat `--run` to compare multiple runs. New runs are immutable local artifacts;
+the command prints JSON containing changed top-3 lists, coverage, and labeled
+metrics. It never assigns ground truth from the generator's reference composition.
+See RECOMMENDATION_RESEARCH.md for the initial audit and limitations.

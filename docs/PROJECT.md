@@ -19,3 +19,11 @@ tab maintains curated inputs for setup and patch updates.
 A third Simulator tab supports empirical calibration: generate reproducible
 synthetic opener scenarios, inspect rankings, save human assessments, and replay
 identical spots after engine/configuration changes. It does not simulate combat.
+
+
+Scoring v3 adds explained item plans based on source builds and conservative role
+priors, explicit champion-item exceptions, optional augment conditions and
+alternative openers. The Configurator edits these expert annotations. The
+Simulator supports a coverage mode and player-labeled top-3 evaluation with
+separate holdout cases. See RECOMMENDATION_RESEARCH.md for research and calibration
+limits; these features do not add combat/economy/scouting inputs.

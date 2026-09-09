@@ -88,3 +88,36 @@ rounding with seeded ties). Unit inventory costs 7-14 gold in total and contains
 at most four copies of any cost 1-3 unit. Templates are adjusted to fit this
 budget, preferring off-direction filler. This changes generation, not scoring.
 Frozen old runs and exact replay inputs remain unchanged. See SIMULATOR.md.
+
+
+## ADR-028 — Explainable stage 2-1 item plans and expert conditions
+
+Accepted following the user's explicit implementation authorization on 2026-09-08.
+Scoring v3 keeps the existing unit curve and dimension weights. For supported
+item contexts and 2-10 components, component fit is 75% existing resource fit
+and 25% executable item-plan fit. Larger inventories or missing item context
+retain the legacy component score. These are initial calibration constants.
+
+A plan respects duplicate recipes, three slots per current holder and selected
+future holder, and single credit for each of Burn/Wound, Sunder and Shred.
+It does not promise a win streak or model combat. Role affinities are conservative
+priors; explicit champion exceptions override source builds and those priors.
+No heuristic is inferred for Specialists or missing roles. Manual augment
+conditions require copies and optionally an individually buildable compatible
+item. Their summed adjustment is capped at +/-20 augment-fit points and the
+result at 0-100. Required/avoided augment gates remain independent.
+
+Alternative openers are configured explicitly and scored separately using the
+existing unit rules. The best unit fit is selected; units across variants are
+not combined. Existing core flags remain authoritative. A missing augment entry
+is now `unassessed`, with null overall score and separately visible resource
+fits. This is distinct from blocked/avoid, with no invented neutral augment fit.
+
+## ADR-029 — Coverage and human-labeled recommendation evaluation
+
+Keep openers-v2 unchanged as the default. An opt-in coverage-v1 stress generator
+rotates across ready compositions every case and repeats a component in cases
+with at least two components. It is not a distribution of real games. Reviews
+may label several acceptable compositions and assign the case to calibration or
+holdout. Top-3 hit rate counts only labeled, realistic cases in each split.
+Frozen replay inherits prior labels as references; no weights are auto-tuned.

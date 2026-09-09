@@ -1,4 +1,7 @@
-# Stage 2-1 matching, version 2.2
+# Stage 2-1 matching, version 3.0
+
+The v3 additions below supersede the original component-only and missing-augment
+interpretations where noted. The original unit curves remain unchanged.
 
 The engine recommends a direction at the first augment choice. Its 0-100 score
 measures resource matching, not win probability or final-board completion.
@@ -145,3 +148,71 @@ Unit decisions default core to false and legacy priority to medium. Saved
 priorities, including unset, no longer affect unit scoring or ready validation.
 The UI exposes only the core checkbox. Bootstrap preserves explicit core flags;
 scoring never changes curated files or infers core from mainChampion or style.
+
+
+## V3 executable item fit (supersedes component-only combination)
+
+The compiler freezes a per-composition `itemContext` with item recipes, names,
+holder/target apiNames, role affinities and their provenance. Only same-set
+craftable items and cost-1/2/3 current holders are considered. Each item selects
+its best supported final holder (source-order ties); this is a candidate model,
+not optimization over all possible final-board item assignments.
+
+Affinity precedence: curated `strategy.itemOverrides` (0 is exclusion), explicit
+assigned item on that champion in the early/final guide (1), then the versioned
+Set 18 role prior. No role fallback exists for Specialist/unknown roles. Role
+numbers are calibration hypotheses, not measured item win rates or BIS claims.
+
+For each currently buildable candidate:
+`quality = targetFit * holderFit * (1 if ownedCopies >= 3 else 0.65)`.
+The threshold models an available 2-star upgrade from copies, not combat strength.
+A cached search maximizes summed quality while consuming each physical component
+at most once, respecting duplicate recipes and three slots per holder/target.
+Only one item of each utility category antiheal/sunder/shred receives credit in
+a plan. This conservative simplification ignores extra stats and wider debuff
+coverage from a second utility item. Innate champion/trait utility is not yet
+modeled; use explicit overrides when relevant.
+
+`planFit = 100 * sum(selectedQualities) / floor(totalOwnedComponents / 2)`.
+For 2-10 components with item evidence:
+`componentFit = 0.75 * legacyComponentFit + 0.25 * planFit`.
+For fewer than two, over ten, or absent item evidence, keep legacy fit. Components
+explicitly marked avoid cannot be spent for plan credit. Unlisted components may
+support a role-compatible plan but do not acquire legacy component credit.
+
+The denominator deliberately includes components with no supported craftable
+plan. The blend stays inside the configured component weight, not a bonus above
+100. Evidence exposes base fit, plan share, selected recipes, holder, target,
+upgrade assumption, affinity provenance, and leftover components. Current data
+coverage and these constants need human calibration. This is a possible plan,
+not an unconditional instruction to slam: gold, HP, level and lobby are unknown.
+
+## V3 expert configuration
+
+`strategy` defaults to empty lists and survives load/save/bootstrap:
+
+- `openers`: `{name, units: [{apiName, core}]}`; up to eight named alternatives.
+  Each is scored independently with the existing unit curve, including core
+  semantics. The highest unit fit wins; ties retain source opener then list order.
+- `itemOverrides`: `{championApiName, itemApiName, fit, reason}`; fit is 0-1.
+- `augmentConditions`: `{augmentApiName, championApiName, minCopies,
+  itemApiName?, bonus, reason}`. The condition matches if copies reach the threshold
+  and, when specified, that item is individually buildable and supported on that
+  champion for the composition. Different rules are independent evidence; they
+  do not claim that all their item conditions can be built simultaneously.
+  Sum bonuses, clamp to +/-20, apply to the base augment fit and clamp to 0-100.
+  All predicates and the actual clipped adjustment are exposed. Existing essential
+  and avoid gates cannot be bypassed. Augment aliases resolve before matching.
+
+The Configurator's expert panel offers named selectors for these annotations.
+Existing compositions are not automatically assigned speculative alternate
+openers or augment rules. Item-role priors and source build support operate
+immediately; further expert annotations are explicitly curated.
+
+## V3 incomplete knowledge
+
+A listed eligible augment is `assessed`; explicit avoidance or a missing required
+augment is `blocked`; an unlisted offer is `unassessed`. Both blocked/unassessed
+retain null overall scores. A composition with no assessed offer but at least
+one unassessed offer appears separately with its resource fits. Unknown does not
+mean neutral and is not inserted into the fully assessed ranking.

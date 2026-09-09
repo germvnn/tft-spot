@@ -69,3 +69,30 @@ disabled metadata. Grouping is exact by name and tier within a set, not fuzzy.
 The first source occurrence is the representative apiName. All source records
 and curated apiName references remain unchanged on disk. The compiler and API
 resolve those references and offered aliases to the same representative.
+
+## Role and item audit (2026-09-08)
+
+The local champion snapshot has explicit `role` strings, separate from traits.
+Observed counts include 7 Attack Casters, 5 Attack Marksmen, 13 Magic Casters,
+2 Magic Marksmen and 4 empty roles. Roles are exposed without filling empty
+values. Specialist/unknown roles receive no inferred role-item affinity.
+
+Craftable recipes use component apiNames, including repeated components (Red
+Buff uses two bows). Shojin's local description grants bonus mana on attacks;
+Last Whisper applies Sunder through attacks and ability damage; Red Buff applies
+Burn/Wound; Guinsoo stacks attack speed over time. These are distinct functions,
+not exclusive item classes. Local item stats/descriptions contain missing values
+and suspicious text (e.g. Nashor's critical-attack mana clause); the engine does
+not parse descriptions into numerical combat models. `filterType` and
+`recommendedChampions` are not interpreted as score weights. The latter can
+contain champion source ids and is not used for apiName matching.
+
+Role priors live in engine/item_fit.py, scoped to Set 18 and versioned separately.
+They are domain annotations, not normalized facts. Explicit per-champion
+exceptions override source early/final assigned items, which override role
+priors. Carousel order is never used to derive these affinities. Raw files and
+existing curated composition files are not migrated by this change.
+
+The local composition index used for the v3 audit contains 24 entries (all ready);
+this differs from the earlier 48-guide listing snapshot described above. The
+benchmark reports actual local coverage; it does not silently equate both sets.
